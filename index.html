@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AR/VR First Aid — PSM Test</title>
+</head>
+<body>
+    <h2>PatientStateModel — console test</h2>
+    <p>Open the browser console to see the simulation running.</p>
+    <button onclick="window.model.start()">Start</button>
+    <button onclick="window.model.stop()">Stop</button>
+
+    <script type="module">
+        import { PatientStateModel } from './core/PatientStateModel.js'
+
+        // create a model with no config — uses all defaults
+        const model = new PatientStateModel()
+
+        // put it on window so the buttons can reach it
+        window.model = model
+
+        console.log('Model created. Click Start to begin.')
+        console.log('Initial state:', model.parameters)
+    </script>
+</body>
+</html>

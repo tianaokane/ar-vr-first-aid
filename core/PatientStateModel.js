@@ -187,4 +187,82 @@ export class PatientStateModel {
         return true
     }   
 
+    // Starts the simulation, begins updating patient state at regular intervals
+    start() {
+        if (this.isRunning) return // prevent double starting
+
+        this.isRunning = true
+        this.startTime = Date.now()
+
+        this.intervalId = setInterval(() => {
+            this._tick()
+        }, 1000) // update every second
+
+        console.log('PatientStateModel: simulation started')
+    }
+    
+    // Stops the simulation, called when scenario ends, patient dies or trainee completes the scenario
+    stop() {
+        if (!this.isRunning) return // prevent double stopping
+
+        this.isRunning = false
+        clearInterval(this.intervalId)
+        this.intervalId = null
+
+        console.log('PatientStateModel: simulation stopped')
+    }
+
+    // Runs every second while simulation is active.
+    // Applies drift, clamps values, updates skin colour & logs history.
+    _tick() {
+        // Step 1 - apply drift to each parameter except derived ones
+        for (const [key, param] of Object.entries(this.parameters)) {
+
+            // skip skin colour as it is a derived parameter
+            if (param.derived) continue
+
+            // apply drift
+            param.value += param.driftPerSecond
+
+            // clamp to min/max bounds - value cannot leave this range
+            param.value = Math.max(param.min, Math.min(param.max, param.value))
+        }
+
+        // Step 2 - recompute derived skin colour from updated values
+        this.parameters.skinColour.value = this._computeSkinColour()
+
+        // Step 3 - log a snapshot to history
+        this._logSnapshot()
+
+        // Step 4 - log to console so we can see it working
+        console.log(`[t=${this._elapsedSeconds()}s]`,
+            `pulse=${this.parameters.pulseRate.value.toFixed(1)}`,
+            `SpO2=${this.parameters.oxygenSaturation.value.toFixed(1)}`,
+            `consciousness=${this.parameters.consciousness.value.toFixed(2)}`,
+            `skin=${this.parameters.skinColour.value.state}`
+            )
+        }
+
+        // Records a full snapshot of all parameter values with a timestamp.
+        // This is the raw data that Pillar 8 (debriefing) will use to draw graphs.
+    _logSnapshot() {
+        const snapshot = {
+            time: this._elapsedSeconds(),
+            values: {}
+        }
+
+        for (const [key, param] of Object.entries(this.parameters)) {
+            snapshot.values[key] = param.derived
+                ? param.value           // skin colour - store full object
+                : parseFloat(param.value.toFixed(2)) // round to 2 decimal places for numeric values
+        }
+
+        this.history.push(snapshot)
+    }
+
+    // Returns how many seconds have elapsed since the simulation started.
+    _elapsedSeconds() {
+        return Math.floor((Date.now() - this.startTime) / 1000)
+    }
+    
 }
