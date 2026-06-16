@@ -1,0 +1,90 @@
+{
+    "scenarioId": "cardiac-arrest-adult",
+    "scenarioName": "Cardiac Arrest — Adult",
+    "description": "A 55-year-old male collapses in the corridor. No pulse detected.",
+
+    "patient": {
+        "name": "James Brennan",
+        "age": 55,
+        "sex": "male",
+        "build": "overweight",
+        "skinTone": "fitzpatrick_2",
+        "medicalHistory": ["hypertension", "type2diabetes"],
+        "personality": "unresponsive",
+        "presentingColour": null
+    },
+
+    "vitals": {
+        "pulseRate":             { "initial": 0,    "drift": 0,      "criticalBelow": 40,  "criticalAbove": 150  },
+        "oxygenSaturation":      { "initial": 70,   "drift": -0.3,   "criticalBelow": 85,  "criticalAbove": null },
+        "consciousness":         { "initial": 0.0,  "drift": 0,      "criticalBelow": 0.3, "criticalAbove": null },
+        "respiratoryRate":       { "initial": 0,    "drift": 0,      "criticalBelow": 8,   "criticalAbove": 40   },
+        "painScore":             { "initial": 0,    "drift": 0,      "criticalBelow": null,"criticalAbove": null },
+        "bloodPressureSystolic": { "initial": 40,   "drift": -0.1,   "criticalBelow": 70,  "criticalAbove": 180  },
+        "temperature":           { "initial": 36.8, "drift": -0.001, "criticalBelow": 35,  "criticalAbove": 39.5 }
+    },
+
+    "couplings": [
+        {
+            "if": "pulseRate",
+            "below": 20,
+            "effects": {
+                "oxygenSaturation": -1.5,
+                "consciousness": -0.05,
+                "bloodPressureSystolic": -1.0,
+                "respiratoryRate": -0.3
+            },
+            "reason": "near-zero cardiac output causes systemic cascade"
+        },
+        {
+            "if": "oxygenSaturation",
+            "below": 85,
+            "effects": {
+                "consciousness": -0.02,
+                "pulseRate": -0.2
+            },
+            "reason": "severe hypoxia causes brain injury and cardiac arrhythmia"
+        },
+        {
+            "if": "bloodPressureSystolic",
+            "below": 70,
+            "effects": {
+                "consciousness": -0.02,
+                "oxygenSaturation": -0.3
+            },
+            "reason": "circulatory shock — poor perfusion to all organs"
+        },
+        {
+            "if": "respiratoryRate",
+            "below": 4,
+            "effects": {
+                "oxygenSaturation": -1.0
+            },
+            "reason": "respiratory failure — no gas exchange"
+        },
+        {
+            "if": "consciousness",
+            "below": 0.2,
+            "effects": {
+                "respiratoryRate": -0.15,
+                "oxygenSaturation": -0.3
+            },
+            "reason": "unconscious patient loses airway patency"
+        }
+    ],
+
+    "requiredActions": [
+        "callForHelp",
+        "checkResponse",
+        "openAirway",
+        "checkBreathing",
+        "cprCompressions",
+        "aedApplication"
+    ],
+
+    "environment": {
+        "location": "hospital-corridor",
+        "lighting": "bright",
+        "timeOfDay": "morning"
+    }
+}

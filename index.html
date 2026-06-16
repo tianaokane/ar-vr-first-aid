@@ -5,21 +5,22 @@
     <title>AR/VR First Aid — PSM Test</title>
 </head>
 <body>
-    <h2>PatientStateModel — console test</h2>
+    <h2>PatientStateModel — scenario test</h2>
     <p>Open the browser console to see the simulation running.</p>
-    <button onclick="window.model.start()">Start</button>
-    <button onclick="window.model.stop()">Stop</button>
+    <button onclick="window.model?.start()">Start</button>
+    <button onclick="window.model?.stop()">Stop</button>
 
     <script type="module">
         import { PatientStateModel } from './core/PatientStateModel.js'
 
-        // create a model with no config — uses all defaults
-        const model = new PatientStateModel()
+        // fetch the scenario JSON, then create the model with it
+        const response = await fetch('./scenarios/broken-leg-adult.json')
+        const scenario = await response.json()
 
-        // put it on window so the buttons can reach it
+        const model = new PatientStateModel(scenario)
         window.model = model
 
-        console.log('Model created. Click Start to begin.')
+        console.log('Scenario loaded:', scenario.scenarioName)
         console.log('Initial state:', model.parameters)
     </script>
 </body>

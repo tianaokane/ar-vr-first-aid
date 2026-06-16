@@ -3,15 +3,15 @@
 export class PatientStateModel {
 
     constructor(scenarioConfig) {
-        //scenarioConfig will come from Pillar 7 JSON file
-
-        // defaults to allow for testing without a scenario config
+        // scenarioConfig will come from Pillar 7 JSON file
+        // defaults allow for testing without a scenario config
 
         this.startTime = Date.now();
         this.isRunning = false
         this.history = []
         this.intervalId = null
         this.scenarioConfig = scenarioConfig ?? {}
+
         // initialise all physiological parameters
         this.parameters = this._buildParameters(scenarioConfig);
     }
@@ -25,139 +25,105 @@ export class PatientStateModel {
         // initial values and drift rates via the scenario JSON.
         // See scenarios/cardiac-arrest-adult.json for reference.
 
-        return {
-            pulseRate: {
-                value: config?.pulseRate?.initial ?? 88,
-                min: 0,
-                max: 200,
-                driftPerSecond: config?.pulseRate?.drift ?? -0.3,
-                criticalBelow: 40,
-                criticalAbove: 150,
-                unit: 'bpm'
-            },
+       const vitals = config?.vitals ?? {}
 
-            oxygenSaturation: {
-                value: config?.oxygenSaturation?.initial ?? 97,
-                min: 0,
-                max: 100,
-                driftPerSecond: config?.oxygenSaturation?.drift ?? -0.2,
-                criticalBelow: 85,
-                criticalAbove: null,
-                unit: '%'
-            },
+        const neutral = {
+            pulseRate:             { initial: 72,   drift: 0,     criticalBelow: 40,  criticalAbove: 150,  min: 0,  max: 200 },
+            oxygenSaturation:      { initial: 99,   drift: 0,     criticalBelow: 85,  criticalAbove: null, min: 0,  max: 100 },
+            consciousness:         { initial: 1.0,  drift: 0,     criticalBelow: 0.3, criticalAbove: null, min: 0,  max: 1   },
+            respiratoryRate:       { initial: 14,   drift: 0,     criticalBelow: 8,   criticalAbove: 40,   min: 0,  max: 60  },
+            painScore:             { initial: 0,    drift: 0,     criticalBelow: null,criticalAbove: null, min: 0,  max: 10  },
+            bloodPressureSystolic: { initial: 120,  drift: 0,     criticalBelow: 70,  criticalAbove: 180,  min: 0,  max: 220 },
+            temperature:           { initial: 37.0, drift: 0,     criticalBelow: 35,  criticalAbove: 39.5, min: 32, max: 42  }
+        }
 
-            consciousness: {
-                value: config?.consciousness?.initial ?? 1.0,
-                min: 0,
-                max: 1,
-                driftPerSecond: config?.consciousness?.drift ?? -0.01,
-                criticalBelow: 0.3,
-                criticalAbove: null,
-                unit: 'GCS proxy'
-            },
+        const built = {}
 
-            respiratoryRate: {
-                value: config?.respiratoryRate?.initial ?? 16,
-                min: 0,
-                max: 60,
-                driftPerSecond: config?.respiratoryRate?.drift ?? -0.1,
-                criticalBelow: 8,
-                criticalAbove: 40,
-                unit: 'breaths/min'
-            },
-
-            painScore: {
-                value: config?.painScore?.initial ?? 7,
-                min: 0,
-                max: 10,
-                driftPerSecond: config?.painScore?.drift ?? 0.05,
-                criticalBelow: null,
-                criticalAbove: null,
-                unit: '/10'
-            },
-
-            bloodPressureSystolic: {
-                value: config?.bloodPressureSystolic?.initial ?? 120,
-                min: 0,
-                max: 220,
-                driftPerSecond: config?.bloodPressureSystolic?.drift ?? -0.4,
-                criticalBelow: 70,
-                criticalAbove: 180,
-                unit: 'mmHg'
-            },
-
-            temperature: {
-                value: config?.temperature?.initial ?? 37.2,
-                min: 32,
-                max: 42,
-                driftPerSecond: config?.temperature?.drift ?? 0.002, // barely moves
-                criticalBelow: 35,
-                criticalAbove: 39.5,
-                unit: '°C',
-                displayOnly: true  // no trainee action significantly affects this
-            },
-
-            // Skin colour is derived, not independently tracked.
-            // Computed from Sp02, bloodPressureSystolic, and temperature.
-            // Values: 'normal', 'pale', 'cyanotic', 'flushed', 'mottled'
-            skinColour: {
-                value: {
-                    state: 'normal',
-                    assessmentSite: null,
-                    visuallyObvious: true
-                },
-                displayOnly: true,
-                derived: true,
-                unit: 'descriptor'
+        for (const [key, defaults] of Object.entries(neutral)) {
+            const override = vitals[key] ?? {}
+            built[key] = {
+                value:          override.initial       ?? defaults.initial,
+                min:            override.min           ?? defaults.min,
+                max:            override.max           ?? defaults.max,
+                driftPerSecond: override.drift         ?? defaults.drift,
+                criticalBelow:  override.criticalBelow ?? defaults.criticalBelow,
+                criticalAbove:  override.criticalAbove ?? defaults.criticalAbove,
+                unit:           this._unitFor(key),
+                displayOnly:    key === 'temperature'
             }
         }
+
+        // skin colour is derived — computed from other parameters, not drifted directly
+        built.skinColour = {
+            value: { state: 'normal', assessmentSite: null, visuallyObvious: true },
+            displayOnly: true,
+            derived: true,
+            unit: 'descriptor'
+        }
+
+        return built
+    }
+
+    // keeps units out of the JSON — they never change per scenario
+    _unitFor(key) {
+        const units = {
+            pulseRate:             'bpm',
+            oxygenSaturation:      '%',
+            consciousness:         'GCS proxy',
+            respiratoryRate:       'breaths/min',
+            painScore:             '/10',
+            bloodPressureSystolic: 'mmHg',
+            temperature:           '°C'
+        }
+        return units[key] ?? ''
     }
 
     _computeSkinColour(){
-        const sp02 = this.parameters.oxygenSaturation.value
-        const bloodPressureSystolic = this.parameters.bloodPressureSystolic.value
+        const spO2 = this.parameters.oxygenSaturation.value
+        const bp = this.parameters.bloodPressureSystolic.value
         const temp = this.parameters.temperature.value
         const consciousness = this.parameters.consciousness.value
         const fitzpatrick = this.scenarioConfig?.patient?.skinTone ?? null
 
-        const state = this._deriveSkinState(sp02, bloodPressureSystolic, temp, consciousness)
+        const state = this._deriveSkinState(spO2, bp, temp, consciousness)
 
-        return { 
+        return {
             state,
-            assessmentSite: this._assessmentSite(state, fitzpatrick),
+            assessmentSite:  this._assessmentSite(state, fitzpatrick),
             visuallyObvious: this._isVisuallyObvious(state, fitzpatrick)
         }
     }
     
-    _deriveSkinState(sp02, bloodPressureSystolic, temp, consciousness) {
-        if (sp02 < 80) return 'cyanotic'
-        if (bloodPressureSystolic < 60 && consciousness < 0.3) return 'mottled'
-        if (bloodPressureSystolic < 90 || sp02 < 90) return 'pale'
+    _deriveSkinState(spO2, bp, temp, consciousness) {
+        if (spO2 < 80) return 'cyanotic'
+        if (bp < 60 && consciousness < 0.3) return 'mottled'
+        if (bp < 90 || spO2 < 90) return 'pale'
         if (temp > 38.5) return 'flushed'
         return 'normal'
     }
 
-    // Where on the body to assess the skin colour, depending on the derived state and the Fitzpatrick skin tone.
+    // Where on the body to assess the skin colour sign,
+    // depending on the derived state and the Fitzpatrick skin tone.
     _assessmentSite(state, fitzpatrick) {
         if (state === 'normal') return null
-        
+
         const darkTone = ['fitzpatrick_4', 'fitzpatrick_5', 'fitzpatrick_6'].includes(fitzpatrick)
         const unknownTone = fitzpatrick === null
 
         if (unknownTone) {
-            // tone-agnostic instructions - good clinical practice regardless of tone. 
+            // tone-agnostic instructions — good clinical practice regardless of tone
             const agnostic = {
                 cyanotic: 'Check mucous membranes, conjunctiva, and lips',
-                pale: 'Check conjunctiva, palms, and nail beds',
-                flushed: 'Check skin temperature by touch and mucous membranes',
-                mottled: 'Look for patchy discolouration on limbs and trunk'
+                pale:     'Check conjunctiva, palms, and nail beds',
+                flushed:  'Check skin temperature by touch and mucous membranes',
+                mottled:  'Look for patchy discolouration on limbs and trunk'
             }
             return agnostic[state] ?? null
         }
-        
+
         if (state === 'cyanotic') {
             return darkTone
-                ? 'Check mucous membranes - gums and inner lips'
+                ? 'Check mucous membranes — gums and inner lips'
                 : 'Visible at lips and fingertips'
         }
         if (state === 'pale') {
@@ -167,7 +133,7 @@ export class PatientStateModel {
         }
         if (state === 'flushed') {
             return darkTone
-                ? 'Check skin temperature by touch - redness may not be visible'
+                ? 'Check skin temperature by touch — redness may not be visible'
                 : 'Visible redness on face and neck'
         }
         if (state === 'mottled') {
@@ -178,14 +144,15 @@ export class PatientStateModel {
         return null
     }
 
-    // Is the sign something the trainee can see with the naked eye, or is it subtle and requires assessment?
+    // Is the sign visible to the naked eye, or does it require targeted assessment?
+    // false means the trainee must know where to look — not that the sign is absent.
     _isVisuallyObvious(state, fitzpatrick) {
         if (state === 'normal') return true
-        if (fitzpatrick === null) return false // unknown tone - should prompt for assessment
+        if (fitzpatrick === null) return false  // unknown tone — always prompt assessment
         const darkTone = ['fitzpatrick_4', 'fitzpatrick_5', 'fitzpatrick_6'].includes(fitzpatrick)
         if (darkTone && ['cyanotic', 'pale', 'flushed'].includes(state)) return false
         return true
-    }   
+    }
 
     // Starts the simulation, begins updating patient state at regular intervals
     start() {
@@ -203,7 +170,7 @@ export class PatientStateModel {
     
     // Stops the simulation, called when scenario ends, patient dies or trainee completes the scenario
     stop() {
-        if (!this.isRunning) return // prevent double stopping
+        if (!this.isRunning) return  // prevent double-stopping
 
         this.isRunning = false
         clearInterval(this.intervalId)
@@ -213,38 +180,73 @@ export class PatientStateModel {
     }
 
     // Runs every second while simulation is active.
-    // Applies drift, clamps values, updates skin colour & logs history.
     _tick() {
-        // Step 1 - apply drift to each parameter except derived ones
-        for (const [key, param] of Object.entries(this.parameters)) {
+        // Step 1 — compute coupling penalties from scenario rules before updating
+        const coupledDrift = this._computeCoupledDrift()
 
-            // skip skin colour as it is a derived parameter
+        // Step 2 — apply base drift + coupling to every parameter except derived ones
+        for (const [key, param] of Object.entries(this.parameters)) {
             if (param.derived) continue
 
-            // apply drift
-            param.value += param.driftPerSecond
+            const totalDrift = param.driftPerSecond + (coupledDrift[key] ?? 0)
+            param.value += totalDrift
 
-            // clamp to min/max bounds - value cannot leave this range
+            // clamp — value can never leave its min/max range
             param.value = Math.max(param.min, Math.min(param.max, param.value))
         }
 
-        // Step 2 - recompute derived skin colour from updated values
+        // Step 3 — recompute derived skin colour from updated values
         this.parameters.skinColour.value = this._computeSkinColour()
 
-        // Step 3 - log a snapshot to history
+        // Step 4 — log snapshot to history
         this._logSnapshot()
 
-        // Step 4 - log to console so we can see it working
+        // Step 5 — console output so we can see it working
         console.log(`[t=${this._elapsedSeconds()}s]`,
             `pulse=${this.parameters.pulseRate.value.toFixed(1)}`,
             `SpO2=${this.parameters.oxygenSaturation.value.toFixed(1)}`,
             `consciousness=${this.parameters.consciousness.value.toFixed(2)}`,
             `skin=${this.parameters.skinColour.value.state}`
-            )
+        )
+    }
+
+     // Returns additional drift caused by parameter interdependencies.
+    // All coupling rules are defined in the scenario JSON — this method
+    // has zero hardcoded clinical knowledge. It just evaluates rules.
+    _computeCoupledDrift() {
+        const couplings = this.scenarioConfig?.couplings ?? []
+
+        // start with zero additional drift on all parameters
+        const coupled = {}
+        for (const key of Object.keys(this.parameters)) {
+            coupled[key] = 0
         }
 
-        // Records a full snapshot of all parameter values with a timestamp.
-        // This is the raw data that Pillar 8 (debriefing) will use to draw graphs.
+        // evaluate each coupling rule from the scenario
+        for (const rule of couplings) {
+            const param = this.parameters[rule.if]
+            if (!param) continue
+
+            // check if the condition is met
+            const conditionMet =
+                (rule.below !== undefined && param.value < rule.below) ||
+                (rule.above !== undefined && param.value > rule.above)
+
+            if (conditionMet) {
+                // apply all effects this coupling defines
+                for (const [target, delta] of Object.entries(rule.effects)) {
+                    if (coupled[target] !== undefined) {
+                        coupled[target] += delta
+                    }
+                }
+            }
+        }
+
+        return coupled
+    }
+    
+    // Records a full snapshot of all parameter values with a timestamp.
+    // Pillar 8 (debriefing) uses this to draw vital signs graphs.
     _logSnapshot() {
         const snapshot = {
             time: this._elapsedSeconds(),
@@ -253,16 +255,15 @@ export class PatientStateModel {
 
         for (const [key, param] of Object.entries(this.parameters)) {
             snapshot.values[key] = param.derived
-                ? param.value           // skin colour - store full object
-                : parseFloat(param.value.toFixed(2)) // round to 2 decimal places for numeric values
+                ? param.value
+                : parseFloat(param.value.toFixed(2))
         }
 
         this.history.push(snapshot)
     }
 
-    // Returns how many seconds have elapsed since the simulation started.
     _elapsedSeconds() {
         return Math.floor((Date.now() - this.startTime) / 1000)
     }
-    
+
 }
