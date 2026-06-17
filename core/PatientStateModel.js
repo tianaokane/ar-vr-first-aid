@@ -214,26 +214,37 @@ export class PatientStateModel {
     // All coupling rules are defined in the scenario JSON — this method
     // has zero hardcoded clinical knowledge. It just evaluates rules.
     _computeCoupledDrift() {
-        const couplings = this.scenarioConfig?.couplings ?? []
+    const couplings = this.scenarioConfig?.couplings ?? []
 
-        // start with zero additional drift on all parameters
-        const coupled = {}
-        for (const key of Object.keys(this.parameters)) {
-            coupled[key] = 0
-        }
+    const coupled = {}
+    for (const key of Object.keys(this.parameters)) {
+        coupled[key] = 0
+    }
 
-        // evaluate each coupling rule from the scenario
-        for (const rule of couplings) {
-            const param = this.parameters[rule.if]
-            if (!param) continue
+    for (const rule of couplings) {
+        // skip rules that have already fired permanently
+        if (rule._fired) continue
 
-            // check if the condition is met
-            const conditionMet =
-                (rule.below !== undefined && param.value < rule.below) ||
-                (rule.above !== undefined && param.value > rule.above)
+        const param = this.parameters[rule.if]
+        if (!param) continue
 
-            if (conditionMet) {
-                // apply all effects this coupling defines
+        const conditionMet =
+            (rule.below !== undefined && param.value < rule.below) ||
+            (rule.above !== undefined && param.value > rule.above)
+
+        if (conditionMet) {
+            if (rule.once) {
+                // permanently bake the effect into base drift rates
+                // this makes the change irreversible — intervention cannot undo it
+                for (const [target, delta] of Object.entries(rule.effects)) {
+                    if (this.parameters[target]) {
+                        this.parameters[target].driftPerSecond += delta
+                    }
+                }
+                rule._fired = true  // never evaluate this rule again
+                console.log(`[coupling fired permanently] ${rule.reason}`)
+            } else {
+                // normal repeating coupling — applied every tick
                 for (const [target, delta] of Object.entries(rule.effects)) {
                     if (coupled[target] !== undefined) {
                         coupled[target] += delta
@@ -241,9 +252,10 @@ export class PatientStateModel {
                 }
             }
         }
-
-        return coupled
     }
+
+    return coupled
+}
     
     // Records a full snapshot of all parameter values with a timestamp.
     // Pillar 8 (debriefing) uses this to draw vital signs graphs.

@@ -46,12 +46,13 @@
         {
             "if": "pulseRate",
             "above": 150,
+            "once": true,
             "effects": {
-                "pulseRate": -0.8,
+                "pulseRate": -1.0,
                 "bloodPressureSystolic": -0.5,
                 "oxygenSaturation": -0.3
             },
-            "reason": "sustained tachycardia above 150 causes cardiac decompensation — heart cannot maintain output"
+            "reason": "sustained tachycardia above 150 causes cardiac decompensation — irreversible without intervention"
         },
         {
             "if": "consciousness",
