@@ -105,6 +105,52 @@
             text-align: left;
             line-height: 1.2;
         }
+
+        .dialogue-panel {
+            grid-column: 1 / -1;
+        }
+
+        .dialogue-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .dialogue-row input {
+            font: inherit;
+            font-size: 12px;
+            border-radius: 7px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            padding: 8px 10px;
+        }
+
+        .dialogue-output {
+            margin-top: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 42px;
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .dialogue-speaker {
+            font-size: 10px;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .dialogue-text {
+            line-height: 1.35;
+        }
+
         @media (max-width: 1100px) {
             .monitor {
                 grid-template-columns: 1fr;
@@ -159,6 +205,21 @@
         <div id="actionsList"></div>
     </div>
 
+    <div class="dialogue-panel card">
+        <div class="section-title">Patient dialogue test</div>
+
+        <div class="dialogue-row">
+            <input id="dialogueInput" type="text" placeholder="Ask the patient something, e.g. Where does it hurt?">
+            <button class="btn-primary" id="btnSendDialogue">Send</button>
+            <button id="btnProactiveDialogue">Proactive line</button>
+        </div>
+
+        <div class="dialogue-output">
+            <div class="dialogue-speaker">Patient response</div>
+            <div class="dialogue-text" id="dialogueOutput">Load a scenario and ask the patient a question.</div>
+        </div>
+    </div>
+
     <div class="log-panel card">
         <div class="section-title">Event log</div>
         <div class="log" id="eventLog"></div>
@@ -197,7 +258,11 @@
         skinSiteText: document.getElementById('skinSiteText'),
         stepList: document.getElementById('stepList'),
         actionsList: document.getElementById('actionsList'),
-        eventLog: document.getElementById('eventLog')
+        eventLog: document.getElementById('eventLog'),
+        dialogueInput: document.getElementById('dialogueInput'),
+        btnSendDialogue: document.getElementById('btnSendDialogue'),
+        btnProactiveDialogue: document.getElementById('btnProactiveDialogue'),
+        dialogueOutput: document.getElementById('dialogueOutput')
     }
 
     for (const id of scenarioFiles) {
@@ -237,6 +302,20 @@
 
     document.getElementById('btnReset').addEventListener('click', async () => {
         await loadScenario(els.scenarioSelect.value)
+    })
+
+    els.btnSendDialogue.addEventListener('click', () => {
+        sendDialogueMessage()
+    })
+
+    els.dialogueInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            sendDialogueMessage()
+        }
+    })
+
+    els.btnProactiveDialogue.addEventListener('click', () => {
+        generateProactiveDialogue()
     })
 
     async function loadScenario(id) {
@@ -295,6 +374,10 @@
         clearLog()
         addLog(`Scenario loaded: ${scenario.scenarioName ?? scenario.scenarioId ?? id}`, 'info')
         addLog(`Patient: ${patientText()}`, 'msg')
+
+        els.dialogueOutput.textContent = dialogueEngine
+            ? 'Dialogue loaded. Ask the patient a question.'
+            : 'No dialogue file loaded for this scenario.'
 
         if (dialogueEngine) {
             addLog(`Dialogue loaded: ${id}-dialogue.json`, 'info')
@@ -453,6 +536,54 @@
         }
 
         updateAll()
+    }
+
+    function sendDialogueMessage() {
+        if (!dialogueEngine) {
+            const msg = 'No dialogue engine loaded for this scenario.'
+            els.dialogueOutput.textContent = msg
+            addLog(msg, 'warn')
+            return
+        }
+
+        const traineeText = els.dialogueInput.value.trim()
+
+        if (!traineeText) {
+            return
+        }
+
+        const response = dialogueEngine.respondToTrainee(traineeText)
+
+        addLog(`Trainee: ${traineeText}`, 'msg')
+
+        if (response) {
+            els.dialogueOutput.textContent = response
+            addLog(`Patient: ${response}`, 'info')
+        } else {
+            els.dialogueOutput.textContent = 'No verbal response.'
+            addLog('Patient: No verbal response.', 'info')
+        }
+
+        els.dialogueInput.value = ''
+    }
+
+    function generateProactiveDialogue() {
+        if (!dialogueEngine) {
+            const msg = 'No dialogue engine loaded for this scenario.'
+            els.dialogueOutput.textContent = msg
+            addLog(msg, 'warn')
+            return
+        }
+
+        const response = dialogueEngine.generateProactiveLine()
+
+        if (response) {
+            els.dialogueOutput.textContent = response
+            addLog(`Patient: ${response}`, 'info')
+        } else {
+            els.dialogueOutput.textContent = 'No verbal response.'
+            addLog('Patient: No verbal response.', 'info')
+        }
     }
 
     function markStep(id) {
