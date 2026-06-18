@@ -1,0 +1,1492 @@
+{
+  "schemaVersion": "2.0-clinical",
+  "scenarioId": "sepsis-adult",
+  "scenarioName": "Sepsis — Adult",
+  "description": "An adult patient presents to the emergency department with suspected infection and early signs of sepsis. They are febrile, tachycardic, tachypnoeic, mildly hypoxic, confused, and at risk of deterioration into septic shock. This scenario trains recognition of sepsis, ABCDE assessment, NEWS2-style concern, monitoring, escalation, oxygen, IV access, lactate/blood cultures, antibiotics and fluids within local policy, urine output monitoring, reassessment, and structured handover.",
+  "clinicalContext": {
+    "setting": "emergency-department-assessment-bay",
+    "learnerRole": "trainee_doctor_or_nurse",
+    "audiences": [
+      "nursing_student",
+      "medical_student",
+      "junior_doctor",
+      "ed_trainee"
+    ],
+    "trainingLevel": "intermediate_clinical_training",
+    "clinicalModelType": "rule_based_training_simulation",
+    "scopeOfPracticeNote": "Trains recognition, escalation, monitoring, and preparation/administration of early sepsis care within role and local policy. It does not require exact antibiotic choice, exact fluid prescription, vasopressor management, ICU-level care, or definitive source control.",
+    "importantNote": "Internal physiology supports training decisions and debriefing only. Medication and intervention actions are abstracted for educational simulation."
+  },
+  "guidelineAnchors": {
+    "recognition": "Suspected infection with abnormal physiology, such as tachycardia, tachypnoea, hypotension, confusion, hypoxia, fever or low temperature, should prompt consideration of sepsis and urgent escalation.",
+    "ABCDE": {
+      "airway": "Check if the patient can speak and maintain their airway.",
+      "breathing": "Assess respiratory rate, work of breathing, chest signs, and oxygen saturation. Give oxygen if hypoxic or significantly unwell.",
+      "circulation": "Assess pulse, blood pressure, capillary refill, skin signs, lactate/shock risk, IV access, blood cultures, bloods, and need for IV fluids.",
+      "disability": "Assess AVPU/GCS, confusion, glucose, pain, and new deterioration in mental state.",
+      "exposure": "Check temperature, look for infection source, rash, wounds, lines, catheter, respiratory/urinary/abdominal signs, while maintaining dignity and warmth."
+    },
+    "sepsisCare": {
+      "earlyEscalation": "Escalate promptly to senior ED/medical/critical care support if high-risk features or deterioration are present.",
+      "monitoring": "Attach monitoring and repeat observations to identify trends.",
+      "lactateAndBloods": "Check lactate and send relevant blood tests.",
+      "bloodCultures": "Take blood cultures before antibiotics where this can be done without causing harmful delay.",
+      "antibiotics": "Give broad-spectrum IV antibiotics promptly when high-risk suspected sepsis is identified, according to local policy and prescribing authority.",
+      "fluids": "Give IV fluids if hypotensive, lactate elevated, or signs of shock are present, according to local policy.",
+      "urineOutput": "Monitor urine output as a marker of perfusion and deterioration.",
+      "handover": "Use SBAR/ATMIST with infection source, observations, NEWS2 concern, lactate, antibiotics, fluids, urine output, and response."
+    }
+  },
+  "sepsisState": "suspected_sepsis",
+  "suspectedSource": "community_acquired_pneumonia",
+  "severityState": "high_risk_suspected_sepsis",
+  "patient": {
+    "name": "Margaret Hughes",
+    "age": 67,
+    "sex": "female",
+    "build": "average",
+    "skinTone": "fitzpatrick_2",
+    "medicalHistory": [
+      "type2diabetes",
+      "hypertension",
+      "recurrent_chest_infections"
+    ],
+    "allergies": [
+      "penicillin_allergy_reported_rash"
+    ],
+    "medications": [
+      "metformin",
+      "amlodipine"
+    ],
+    "personality": "confused_frightened_breathless",
+    "presentingColour": "flushed_clammy",
+    "arrivalMode": "brought_to_ed_by_family",
+    "chiefComplaint": "fever, cough, shortness of breath, confusion, and feeling very unwell",
+    "historySummary": "Three days of productive cough and fever. Family reports she became confused today and has passed very little urine.",
+    "position": "sitting upright on ED trolley, leaning forward slightly, breathing quickly",
+    "visiblePresentation": [
+      "appears acutely unwell",
+      "flushed face and clammy skin",
+      "breathing rapidly",
+      "productive cough",
+      "intermittently confused",
+      "shivering/rigors reported",
+      "dry lips",
+      "family member nearby and worried",
+      "may become drowsier if sepsis progresses"
+    ],
+    "openingDialogue": "I feel awful... I can't catch my breath. Where am I again?"
+  },
+  "simulationState": {
+    "patientIdentityConfirmed": false,
+    "patientReassured": false,
+    "familyCollateralTaken": false,
+    "primarySurveyStarted": false,
+    "airwayAssessed": false,
+    "airwayPatent": true,
+    "breathingAssessed": false,
+    "breathingAdequate": false,
+    "oxygenApplied": false,
+    "monitoringAttached": false,
+    "pulseOxProbeAttached": false,
+    "bpCuffAttached": false,
+    "ecgMonitoringAttached": false,
+    "vitalsMonitoringStarted": false,
+    "circulationAssessed": false,
+    "capillaryRefillChecked": false,
+    "shockRiskAssessed": false,
+    "disabilityAssessed": false,
+    "bloodGlucoseChecked": false,
+    "confusionRecognised": false,
+    "exposureCompleted": false,
+    "temperatureChecked": false,
+    "infectionSourceChecked": false,
+    "patientDignityMaintained": false,
+    "patientKeptWarm": false,
+    "sepsisRecognised": false,
+    "news2ConcernIdentified": false,
+    "seniorHelpCalled": false,
+    "sepsisEscalationActivated": false,
+    "criticalCareConsidered": false,
+    "ivAccessEstablished": false,
+    "bloodsSent": false,
+    "lactateChecked": false,
+    "bloodCulturesTaken": false,
+    "antibioticsRequested": false,
+    "antibioticsAdministered": false,
+    "fluidBolusPrepared": false,
+    "ivFluidsGiven": false,
+    "fluidResponseReassessed": false,
+    "urineOutputMonitoringStarted": false,
+    "catheterConsidered": false,
+    "painOrDiscomfortAssessed": false,
+    "reassessmentCompleted": false,
+    "handoverPrepared": false,
+    "unsafeDelayOccurred": false,
+    "antibioticsDelayed": false,
+    "culturesDelayedWithoutReason": false,
+    "oxygenDelayed": false,
+    "fluidsDelayed": false,
+    "inappropriateDischargeAttempted": false,
+    "oralFluidsOnlyGiven": false,
+    "leftUnmonitored": false,
+    "infectionBurden": 0.7,
+    "vasodilation": 0.45,
+    "capillaryLeak": 0.35,
+    "lactate": 3.2,
+    "urineOutputMlPerHour": 15,
+    "shockRisk": 0.55,
+    "timeWithoutSeniorHelp": 0,
+    "timeWithoutAntibiotics": 0,
+    "timeWithoutFluids": 0,
+    "timeWithoutMonitoring": 0,
+    "timeWithoutOxygen": 0
+  },
+  "metrics": {
+    "timeToMonitoringSeconds": null,
+    "timeToSepsisRecognitionSeconds": null,
+    "timeToSeniorEscalationSeconds": null,
+    "timeToOxygenSeconds": null,
+    "timeToIVAccessSeconds": null,
+    "timeToLactateSeconds": null,
+    "timeToBloodCulturesSeconds": null,
+    "timeToAntibioticsSeconds": null,
+    "timeToFluidsSeconds": null,
+    "timeToUrineOutputMonitoringSeconds": null,
+    "unsafeActions": 0,
+    "unsafeDelayActions": 0,
+    "missedActions": 0,
+    "reassuranceCount": 0,
+    "vitalsCheckCount": 0,
+    "reassessmentCount": 0,
+    "averageActionQuality": 1.0,
+    "actionQualitySampleCount": 0
+  },
+  "vitals": {
+    "pulseRate": {
+      "initial": 118,
+      "drift": 0.04,
+      "criticalBelow": 40,
+      "criticalAbove": 140,
+      "min": 40,
+      "max": 180,
+      "unit": "bpm",
+      "label": "Heart rate",
+      "meaning": "Tachycardia can reflect fever, sepsis, hypovolaemia, pain, anxiety, or shock.",
+      "learnerVisible": true
+    },
+    "bloodPressureSystolic": {
+      "initial": 98,
+      "drift": -0.035,
+      "criticalBelow": 90,
+      "criticalAbove": 180,
+      "min": 50,
+      "max": 220,
+      "unit": "mmHg",
+      "label": "BP systolic",
+      "meaning": "Falling systolic blood pressure suggests sepsis-related circulatory failure or septic shock.",
+      "learnerVisible": true
+    },
+    "respiratoryRate": {
+      "initial": 28,
+      "drift": 0.025,
+      "criticalBelow": 8,
+      "criticalAbove": 35,
+      "min": 6,
+      "max": 45,
+      "unit": "breaths/min",
+      "label": "Resp rate",
+      "meaning": "Tachypnoea is an important early marker of sepsis and respiratory compromise.",
+      "learnerVisible": true
+    },
+    "oxygenSaturation": {
+      "initial": 92,
+      "drift": -0.008,
+      "criticalBelow": 90,
+      "criticalAbove": null,
+      "min": 70,
+      "max": 100,
+      "unit": "%",
+      "label": "SpO₂",
+      "meaning": "Hypoxia may reflect pneumonia, sepsis, respiratory fatigue, or poor perfusion.",
+      "learnerVisible": true
+    },
+    "consciousness": {
+      "initial": 0.82,
+      "drift": -0.0008,
+      "criticalBelow": 0.7,
+      "criticalAbove": null,
+      "min": 0,
+      "max": 1,
+      "unit": "AVPU/GCS proxy",
+      "label": "Consciousness",
+      "meaning": "1 = alert, 0 = unresponsive. New confusion or falling consciousness is a high-risk sign.",
+      "learnerVisible": true
+    },
+    "temperature": {
+      "initial": 39.1,
+      "drift": 0.0005,
+      "criticalBelow": 35.5,
+      "criticalAbove": 40.0,
+      "min": 32,
+      "max": 42,
+      "unit": "°C",
+      "label": "Temperature",
+      "meaning": "Fever or hypothermia can occur in sepsis. A normal temperature does not exclude sepsis.",
+      "learnerVisible": true
+    },
+    "painScore": {
+      "initial": 2,
+      "drift": 0.002,
+      "criticalBelow": null,
+      "criticalAbove": 8,
+      "min": 0,
+      "max": 10,
+      "unit": "/10",
+      "label": "Pain score",
+      "meaning": "Pain may indicate infection source but is not the main severity driver in this scenario.",
+      "learnerVisible": true
+    },
+    "bloodGlucose": {
+      "initial": 11.8,
+      "drift": 0.002,
+      "criticalBelow": 3.5,
+      "criticalAbove": 20,
+      "min": 1,
+      "max": 30,
+      "unit": "mmol/L",
+      "label": "Blood glucose",
+      "meaning": "Diabetes, stress response, and infection can cause hyperglycaemia. Hypoglycaemia can also cause confusion and must be excluded.",
+      "learnerVisible": true
+    }
+  },
+  "derivedParameters": {
+    "skinColour": {
+      "sourceParameters": [
+        "temperature",
+        "bloodPressureSystolic",
+        "shockRisk",
+        "consciousness"
+      ],
+      "states": [
+        "normal",
+        "flushed",
+        "pale",
+        "cool_clammy",
+        "mottled"
+      ],
+      "fitzpatrickAware": true,
+      "learnerVisible": true
+    },
+    "workOfBreathing": {
+      "initial": "increased_work_of_breathing",
+      "unit": "",
+      "label": "Work of breathing",
+      "learnerVisible": true,
+      "possibleValues": [
+        "normal",
+        "increased_work_of_breathing",
+        "respiratory_distress",
+        "fatiguing"
+      ]
+    },
+    "mentalStateDisplay": {
+      "initial": "confused_but_rousable",
+      "unit": "",
+      "label": "Mental state",
+      "learnerVisible": true,
+      "possibleValues": [
+        "alert_orientated",
+        "confused_but_rousable",
+        "drowsy",
+        "unresponsive"
+      ]
+    },
+    "urineOutputDisplay": {
+      "initial": "very_low_reported_output",
+      "unit": "",
+      "label": "Urine output",
+      "learnerVisible": true,
+      "meaning": "Urine output trend becomes more useful once monitoring is started."
+    },
+    "sepsisRiskDisplay": {
+      "initial": "high_risk_suspected_sepsis",
+      "unit": "",
+      "label": "Sepsis risk",
+      "learnerVisible": true,
+      "possibleValues": [
+        "not_assessed",
+        "possible_infection",
+        "moderate_risk_suspected_sepsis",
+        "high_risk_suspected_sepsis",
+        "septic_shock"
+      ]
+    }
+  },
+  "monitorOutputs": {
+    "edMonitor": {
+      "requires": [
+        "monitoringAttached"
+      ],
+      "rules": [
+        {
+          "targetParameter": "pulseRate",
+          "display": "numeric_pulseRate"
+        },
+        {
+          "targetParameter": "bloodPressureSystolic",
+          "display": "numeric_bloodPressureSystolic"
+        },
+        {
+          "targetParameter": "respiratoryRate",
+          "display": "numeric_respiratoryRate"
+        },
+        {
+          "targetParameter": "oxygenSaturation",
+          "display": "numeric_oxygenSaturation"
+        },
+        {
+          "targetParameter": "temperature",
+          "display": "numeric_temperature"
+        }
+      ]
+    },
+    "pointOfCareTesting": {
+      "requiresAny": [
+        "bloodGlucoseChecked",
+        "lactateChecked"
+      ],
+      "rules": [
+        {
+          "targetParameter": "bloodGlucose",
+          "display": "numeric_bloodGlucose"
+        },
+        {
+          "targetParameter": "lactate",
+          "display": "numeric_lactate"
+        }
+      ]
+    }
+  },
+  "couplings": [
+    {
+      "id": "untreated_sepsis_progression",
+      "if": "infectionBurden",
+      "above": 0.6,
+      "onlyWhen": {
+        "antibioticsAdministered": false
+      },
+      "effects": {
+        "pulseRate": 0.06,
+        "bloodPressureSystolic": -0.04,
+        "respiratoryRate": 0.03,
+        "oxygenSaturation": -0.01,
+        "consciousness": -0.0008,
+        "temperature": 0.001
+      },
+      "hiddenStateEffects": {
+        "timeWithoutAntibiotics": 1,
+        "shockRisk": 0.003,
+        "lactate": 0.006,
+        "vasodilation": 0.002
+      },
+      "reason": "Untreated sepsis can progress with worsening tachycardia, hypotension, tachypnoea, hypoxia, lactate rise, and confusion."
+    },
+    {
+      "id": "hypoxia_worsens_confusion",
+      "if": "oxygenSaturation",
+      "below": 92,
+      "onlyWhen": {
+        "oxygenApplied": false
+      },
+      "effects": {
+        "respiratoryRate": 0.025,
+        "consciousness": -0.001,
+        "pulseRate": 0.03
+      },
+      "hiddenStateEffects": {
+        "timeWithoutOxygen": 1,
+        "shockRisk": 0.0015
+      },
+      "reason": "Hypoxia worsens physiological stress and confusion."
+    },
+    {
+      "id": "unmanaged_circulatory_failure",
+      "if": "bloodPressureSystolic",
+      "below": 100,
+      "onlyWhen": {
+        "ivFluidsGiven": false
+      },
+      "effects": {
+        "pulseRate": 0.055,
+        "bloodPressureSystolic": -0.035,
+        "consciousness": -0.001
+      },
+      "hiddenStateEffects": {
+        "timeWithoutFluids": 1,
+        "lactate": 0.008,
+        "shockRisk": 0.0035,
+        "urineOutputMlPerHour": -0.03
+      },
+      "reason": "Hypotension without fluid/shock escalation worsens perfusion, lactate, and mental state."
+    },
+    {
+      "id": "oxygen_improves_hypoxia",
+      "if": "oxygenApplied",
+      "equals": true,
+      "effects": {
+        "oxygenSaturation": 0.06,
+        "respiratoryRate": -0.01,
+        "consciousness": 0.0003
+      },
+      "hiddenStateEffects": {
+        "shockRisk": -0.0004
+      },
+      "reason": "Oxygen improves hypoxia and reduces physiological stress, but does not treat infection."
+    },
+    {
+      "id": "antibiotics_slow_infection_progression",
+      "if": "antibioticsAdministered",
+      "equals": true,
+      "effects": {
+        "temperature": -0.0015,
+        "pulseRate": -0.012,
+        "respiratoryRate": -0.006
+      },
+      "hiddenStateEffects": {
+        "infectionBurden": -0.0025,
+        "shockRisk": -0.001,
+        "lactate": -0.002
+      },
+      "reason": "Antibiotics slow infection progression but improvement is gradual and requires reassessment."
+    },
+    {
+      "id": "fluids_support_circulation",
+      "if": "ivFluidsGiven",
+      "equals": true,
+      "effects": {
+        "bloodPressureSystolic": 0.04,
+        "pulseRate": -0.018,
+        "consciousness": 0.0006
+      },
+      "hiddenStateEffects": {
+        "shockRisk": -0.0018,
+        "lactate": -0.004,
+        "urineOutputMlPerHour": 0.08
+      },
+      "reason": "IV fluids support perfusion in hypotension/shock but response must be reassessed."
+    },
+    {
+      "id": "senior_help_slows_risk",
+      "if": "seniorHelpCalled",
+      "equals": true,
+      "hiddenStateEffects": {
+        "shockRisk": -0.0008
+      },
+      "reason": "Senior escalation supports timely decision-making and definitive management."
+    },
+    {
+      "id": "delayed_monitoring_increases_missed_deterioration",
+      "if": "timeWithoutMonitoring",
+      "above": 90,
+      "onlyWhen": {
+        "monitoringAttached": false
+      },
+      "hiddenStateEffects": {
+        "shockRisk": 0.002,
+        "missedActions": 1
+      },
+      "reason": "Without monitoring, deterioration may not be detected early."
+    }
+  ],
+  "actionMappings": {
+    "confirmIdentityAndIntroduceSelf": {
+      "label": "Confirm Identity / Introduce Self",
+      "group": "Initial approach",
+      "instruction": "Introduce yourself, confirm identity if possible, explain that you are going to assess her urgently, and reassure the patient/family.",
+      "sequence": 1,
+      "completionOnly": true,
+      "setsState": {
+        "patientIdentityConfirmed": true,
+        "patientReassured": true
+      },
+      "metrics": {
+        "increment": "reassuranceCount",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "effects": {
+        "pulseRate": -1,
+        "respiratoryRate": -0.3
+      },
+      "clinicalFinding": "Patient is frightened, confused, and intermittently orientated. Family confirm identity and report she is not usually confused.",
+      "patientDialogue": "I'm Margaret... I think. My daughter brought me in.",
+      "learnerFeedback": "Communication and collateral history help identify new confusion and deterioration."
+    },
+    "startABCDE": {
+      "label": "Start ABCDE Assessment",
+      "group": "ABCDE",
+      "instruction": "Begin a structured ABCDE assessment and call for help if the patient appears seriously unwell.",
+      "sequence": 2,
+      "setsState": {
+        "primarySurveyStarted": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Patient looks acutely unwell: tachypnoeic, clammy, confused, and febrile.",
+      "learnerFeedback": "ABCDE prevents missing life-threatening deterioration."
+    },
+    "assessAirway": {
+      "label": "A — Assess Airway",
+      "group": "ABCDE",
+      "instruction": "Check whether the patient can speak and maintain her airway.",
+      "sequence": 3,
+      "setsState": {
+        "airwayAssessed": true,
+        "airwayPatent": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Patient is speaking in short sentences. Airway is patent.",
+      "patientDialogue": "I can talk... I'm just so tired."
+    },
+    "assessBreathing": {
+      "label": "B — Assess Breathing",
+      "group": "ABCDE",
+      "instruction": "Assess respiratory rate, work of breathing, chest expansion, auscultation if available, and SpO2.",
+      "sequence": 4,
+      "setsState": {
+        "breathingAssessed": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "RR 28, SpO2 92% on air, increased work of breathing, crackles at the right base, productive cough.",
+      "patientDialogue": "I can't catch my breath properly.",
+      "learnerFeedback": "Breathing findings suggest possible pneumonia and sepsis-related respiratory compromise."
+    },
+    "attachMonitoring": {
+      "label": "Attach ED Monitoring",
+      "group": "Monitoring",
+      "instruction": "Attach pulse oximeter, BP cuff, ECG leads, and start repeated observations.",
+      "sequence": 5,
+      "setsState": {
+        "monitoringAttached": true,
+        "pulseOxProbeAttached": true,
+        "bpCuffAttached": true,
+        "ecgMonitoringAttached": true,
+        "vitalsMonitoringStarted": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToMonitoringSeconds",
+        "increment": "vitalsCheckCount",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Initial observations: HR 118, BP 98 systolic, RR 28, SpO2 92%, temperature 39.1°C, confused.",
+      "learnerFeedback": "Monitoring allows early recognition of sepsis deterioration and response to treatment."
+    },
+    "applyOxygenIfHypoxic": {
+      "label": "Give Oxygen if Hypoxic",
+      "group": "Breathing",
+      "instruction": "Apply oxygen if hypoxic or significantly unwell, then titrate according to local oxygen targets and policy.",
+      "sequence": 6,
+      "requiresState": {
+        "breathingAssessed": true
+      },
+      "setsState": {
+        "oxygenApplied": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToOxygenSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "effects": {
+        "oxygenSaturation": 3.0,
+        "respiratoryRate": -1.0,
+        "consciousness": 0.01
+      },
+      "hiddenStateEffects": {
+        "shockRisk": -0.02
+      },
+      "clinicalFinding": "Oxygen applied. SpO2 begins to improve but patient remains tachypnoeic.",
+      "patientDialogue": "That helps a little.",
+      "learnerFeedback": "Oxygen supports hypoxia but does not treat the underlying infection."
+    },
+    "assessCirculation": {
+      "label": "C — Assess Circulation",
+      "group": "ABCDE",
+      "instruction": "Assess pulse, BP, capillary refill, skin signs, perfusion, dehydration, and signs of shock.",
+      "sequence": 7,
+      "setsState": {
+        "circulationAssessed": true,
+        "capillaryRefillChecked": true,
+        "shockRiskAssessed": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "HR 118, systolic BP 98, capillary refill 4 seconds, clammy skin, dry mucous membranes, very low urine output reported.",
+      "learnerFeedback": "Hypotension, delayed capillary refill, tachycardia, and low urine output suggest impaired perfusion."
+    },
+    "assessDisabilityGlucose": {
+      "label": "D — Assess Disability / Glucose",
+      "group": "ABCDE",
+      "instruction": "Assess AVPU/GCS, new confusion, pupils if relevant, glucose, and pain/discomfort.",
+      "sequence": 8,
+      "setsState": {
+        "disabilityAssessed": true,
+        "confusionRecognised": true,
+        "bloodGlucoseChecked": true,
+        "painOrDiscomfortAssessed": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Patient is confused but rousable. Blood glucose is 11.8 mmol/L. No focal neurological deficit seen.",
+      "patientDialogue": "I'm sorry... I don't know what day it is.",
+      "learnerFeedback": "New confusion is a high-risk sign in suspected sepsis. Glucose check helps exclude hypoglycaemia."
+    },
+    "exposeAndCheckSource": {
+      "label": "E — Exposure / Infection Source",
+      "group": "ABCDE",
+      "instruction": "Check temperature, look for infection source, rash, wounds, lines, urinary/abdominal/respiratory signs, while maintaining dignity and warmth.",
+      "sequence": 9,
+      "setsState": {
+        "exposureCompleted": true,
+        "temperatureChecked": true,
+        "infectionSourceChecked": true,
+        "patientDignityMaintained": true,
+        "patientKeptWarm": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Temperature 39.1°C. Productive cough and right basal crackles suggest chest infection/pneumonia. No non-blanching rash seen.",
+      "learnerFeedback": "Exposure should seek infection source while avoiding unnecessary cooling or loss of dignity."
+    },
+    "recogniseSepsis": {
+      "label": "Recognise Suspected Sepsis",
+      "group": "Recognition",
+      "instruction": "Identify suspected sepsis from infection plus abnormal observations: RR 28, HR 118, systolic BP 98, confusion, fever, hypoxia, low urine output.",
+      "sequence": 10,
+      "requiresState": {
+        "breathingAssessed": true,
+        "circulationAssessed": true,
+        "disabilityAssessed": true
+      },
+      "setsState": {
+        "sepsisRecognised": true,
+        "news2ConcernIdentified": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToSepsisRecognitionSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "High-risk suspected sepsis identified. NEWS2-style concern is high due to RR, BP, HR, oxygen saturation, temperature, and confusion.",
+      "learnerFeedback": "This is not just a chest infection. The abnormal physiology suggests sepsis risk."
+    },
+    "callSeniorSepsisHelp": {
+      "label": "Call Senior / Sepsis Escalation",
+      "group": "Escalation",
+      "instruction": "Escalate to senior ED/medical team and activate local sepsis pathway due to suspected high-risk sepsis.",
+      "sequence": 11,
+      "requiresState": {
+        "sepsisRecognised": true
+      },
+      "completionOnly": true,
+      "setsState": {
+        "seniorHelpCalled": true,
+        "sepsisEscalationActivated": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToSeniorEscalationSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Senior help requested and sepsis pathway activated.",
+      "learnerFeedback": "Early escalation is essential because sepsis can deteriorate rapidly."
+    },
+    "establishIVAccess": {
+      "label": "Establish IV Access",
+      "group": "Circulation / Sepsis care",
+      "instruction": "Establish IV access within role/local policy, or request urgent help to do so.",
+      "sequence": 12,
+      "setsState": {
+        "ivAccessEstablished": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToIVAccessSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "IV access established/prepared.",
+      "learnerFeedback": "IV access supports bloods, cultures, antibiotics, and fluids."
+    },
+    "sendBloodsAndLactate": {
+      "label": "Send Bloods / Check Lactate",
+      "group": "Circulation / Sepsis care",
+      "instruction": "Send sepsis bloods and check lactate according to local pathway.",
+      "sequence": 13,
+      "requiresState": {
+        "ivAccessEstablished": true
+      },
+      "setsState": {
+        "bloodsSent": true,
+        "lactateChecked": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToLactateSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Bloods sent. Lactate is 3.2 mmol/L, supporting concern for impaired perfusion.",
+      "learnerFeedback": "Lactate helps identify severity and need for urgent reassessment."
+    },
+    "takeBloodCultures": {
+      "label": "Take Blood Cultures",
+      "group": "Circulation / Sepsis care",
+      "instruction": "Take blood cultures before antibiotics where this can be done without causing harmful delay.",
+      "sequence": 14,
+      "requiresState": {
+        "ivAccessEstablished": true
+      },
+      "setsState": {
+        "bloodCulturesTaken": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToBloodCulturesSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Blood cultures taken.",
+      "learnerFeedback": "Cultures help identify the organism, but antibiotics should not be dangerously delayed."
+    },
+    "requestAntibiotics": {
+      "label": "Request IV Antibiotics",
+      "group": "Antibiotics",
+      "instruction": "Request appropriate broad-spectrum IV antibiotics according to local policy, allergies, and prescribing authority.",
+      "sequence": 15,
+      "requiresState": {
+        "sepsisRecognised": true,
+        "seniorHelpCalled": true
+      },
+      "setsState": {
+        "antibioticsRequested": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Antibiotics requested with penicillin allergy flagged.",
+      "learnerFeedback": "Antibiotics should be prompt and allergy-aware."
+    },
+    "administerAntibioticsAsPrescribed": {
+      "label": "Administer Antibiotics as Prescribed",
+      "group": "Antibiotics",
+      "instruction": "Administer prescribed/approved IV antibiotics promptly, according to role and local policy.",
+      "sequence": 16,
+      "requiresState": {
+        "antibioticsRequested": true,
+        "ivAccessEstablished": true
+      },
+      "setsState": {
+        "antibioticsAdministered": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToAntibioticsSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "hiddenStateEffects": {
+        "infectionBurden": -0.08,
+        "shockRisk": -0.05
+      },
+      "clinicalFinding": "IV antibiotics administered according to local policy and allergy status.",
+      "learnerFeedback": "Antibiotics treat the suspected infection, but physiological recovery must be monitored."
+    },
+    "prepareFluidBolus": {
+      "label": "Prepare IV Fluids for Hypotension",
+      "group": "Fluids / perfusion",
+      "instruction": "Prepare IV fluids for hypotension, elevated lactate, or signs of shock according to local policy.",
+      "sequence": 17,
+      "requiresState": {
+        "circulationAssessed": true,
+        "ivAccessEstablished": true
+      },
+      "setsState": {
+        "fluidBolusPrepared": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Fluids prepared because patient is hypotensive with delayed capillary refill and raised lactate.",
+      "learnerFeedback": "Fluid therapy supports perfusion in suspected sepsis-related shock."
+    },
+    "giveIVFluidsAsPrescribed": {
+      "label": "Give IV Fluids as Prescribed",
+      "group": "Fluids / perfusion",
+      "instruction": "Give IV fluids as prescribed/approved and monitor for response and overload risk.",
+      "sequence": 18,
+      "requiresState": {
+        "fluidBolusPrepared": true,
+        "monitoringAttached": true
+      },
+      "setsState": {
+        "ivFluidsGiven": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToFluidsSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "effects": {
+        "bloodPressureSystolic": 8,
+        "pulseRate": -4,
+        "consciousness": 0.02
+      },
+      "hiddenStateEffects": {
+        "shockRisk": -0.08,
+        "lactate": -0.2,
+        "urineOutputMlPerHour": 5
+      },
+      "clinicalFinding": "Fluid bolus given. BP begins to improve slightly; ongoing reassessment is required.",
+      "learnerFeedback": "Fluids may improve perfusion, but response must be checked and escalated if poor."
+    },
+    "monitorUrineOutput": {
+      "label": "Monitor Urine Output",
+      "group": "Monitoring",
+      "instruction": "Start urine output monitoring and consider catheterisation according to local policy if accurate measurement is needed.",
+      "sequence": 19,
+      "setsState": {
+        "urineOutputMonitoringStarted": true,
+        "catheterConsidered": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToUrineOutputMonitoringSeconds",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Urine output is very low, approximately 15 mL/hour before treatment.",
+      "learnerFeedback": "Low urine output is a marker of poor perfusion and should be included in handover."
+    },
+    "reassessAfterTreatment": {
+      "label": "Reassess Observations and Response",
+      "group": "Reassessment",
+      "instruction": "Reassess ABCDE, observations, oxygen requirement, BP response, mental state, lactate concern, urine output, and need for critical care.",
+      "sequence": 20,
+      "requiresState": {
+        "monitoringAttached": true
+      },
+      "completionOnly": true,
+      "setsState": {
+        "reassessmentCompleted": true,
+        "fluidResponseReassessed": true
+      },
+      "metrics": {
+        "increment": "reassessmentCount",
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "After initial treatment: HR improving but still elevated, BP slightly improved, RR remains high, SpO2 improved with oxygen, confusion slightly better but still present.",
+      "learnerFeedback": "Sepsis care requires repeated reassessment; a single intervention is not enough."
+    },
+    "considerCriticalCareIfPoorResponse": {
+      "label": "Consider Critical Care Escalation",
+      "group": "Escalation",
+      "instruction": "If hypotension, high lactate, hypoxia, or reduced consciousness persist despite initial care, consider critical care escalation.",
+      "sequence": 21,
+      "requiresState": {
+        "seniorHelpCalled": true,
+        "reassessmentCompleted": true
+      },
+      "completionOnly": true,
+      "setsState": {
+        "criticalCareConsidered": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Critical care escalation considered due to high-risk sepsis physiology.",
+      "learnerFeedback": "Persistent instability after initial sepsis care should trigger further escalation."
+    },
+    "prepareClinicalHandover": {
+      "label": "Prepare SBAR / Sepsis Handover",
+      "group": "Handover",
+      "instruction": "Prepare SBAR handover including suspected source, observations, NEWS2 concern, lactate, cultures, antibiotics, fluids, urine output, response, and ongoing risks.",
+      "sequence": 22,
+      "completionOnly": true,
+      "setsState": {
+        "handoverPrepared": true
+      },
+      "metrics": {
+        "updateAverageQualityAs": "averageActionQuality",
+        "averageCountAs": "actionQualitySampleCount"
+      },
+      "clinicalFinding": "Handover ready: 67F, suspected pneumonia sepsis, HR 118, BP 98, RR 28, SpO2 92%, temp 39.1, confused, lactate 3.2, cultures/bloods sent, antibiotics/fluids given, oxygen applied, urine output low.",
+      "learnerFeedback": "Structured handover supports continuity and escalation."
+    },
+    "observeOnly": {
+      "label": "Observe Only / Wait",
+      "group": "Unsafe actions",
+      "instruction": "Unsafe test action: waiting without escalation or treatment can allow sepsis to progress.",
+      "dangerousTestAction": true,
+      "sequence": 90,
+      "setsState": {
+        "unsafeDelayOccurred": true,
+        "leftUnmonitored": true
+      },
+      "metrics": {
+        "increment": "unsafeActions",
+        "incrementAlso": "unsafeDelayActions"
+      },
+      "effects": {
+        "pulseRate": 6,
+        "bloodPressureSystolic": -5,
+        "respiratoryRate": 2,
+        "consciousness": -0.02
+      },
+      "hiddenStateEffects": {
+        "shockRisk": 0.1,
+        "lactate": 0.4,
+        "infectionBurden": 0.04
+      },
+      "patientDialogue": "I feel worse... why am I so confused?",
+      "learnerFeedback": "Sepsis can deteriorate quickly. Observation alone is unsafe when high-risk features are present."
+    },
+    "delayAntibiotics": {
+      "label": "Delay Antibiotics",
+      "group": "Unsafe actions",
+      "instruction": "Unsafe test action: delaying antibiotics in high-risk suspected sepsis can worsen outcomes.",
+      "dangerousTestAction": true,
+      "sequence": 91,
+      "setsState": {
+        "antibioticsDelayed": true,
+        "unsafeDelayOccurred": true
+      },
+      "metrics": {
+        "increment": "unsafeActions",
+        "incrementAlso": "unsafeDelayActions"
+      },
+      "effects": {
+        "pulseRate": 4,
+        "bloodPressureSystolic": -3,
+        "respiratoryRate": 1.5,
+        "temperature": 0.2
+      },
+      "hiddenStateEffects": {
+        "infectionBurden": 0.08,
+        "shockRisk": 0.08,
+        "lactate": 0.3
+      },
+      "learnerFeedback": "Cultures are useful, but antibiotics should not be harmfully delayed in high-risk suspected sepsis."
+    },
+    "giveOralFluidsOnly": {
+      "label": "Give Oral Fluids Only",
+      "group": "Unsafe actions",
+      "instruction": "Unsafe test action: oral fluids alone are not adequate for hypotensive high-risk suspected sepsis.",
+      "dangerousTestAction": true,
+      "sequence": 92,
+      "setsState": {
+        "oralFluidsOnlyGiven": true
+      },
+      "metrics": {
+        "increment": "unsafeActions"
+      },
+      "effects": {
+        "consciousness": -0.01
+      },
+      "hiddenStateEffects": {
+        "shockRisk": 0.04
+      },
+      "patientDialogue": "I feel sick... I don't think I can drink.",
+      "learnerFeedback": "Oral fluids are not a substitute for IV access, escalation, and IV fluids when shock risk is present."
+    },
+    "dischargeAsViralIllness": {
+      "label": "Discharge / Reassure as Viral Illness",
+      "group": "Unsafe actions",
+      "instruction": "Unsafe test action: discharging a confused, hypotensive, tachypnoeic patient with suspected infection is unsafe.",
+      "dangerousTestAction": true,
+      "sequence": 93,
+      "setsState": {
+        "inappropriateDischargeAttempted": true,
+        "unsafeDelayOccurred": true
+      },
+      "metrics": {
+        "increment": "unsafeActions",
+        "incrementAlso": "unsafeDelayActions"
+      },
+      "effects": {
+        "bloodPressureSystolic": -8,
+        "pulseRate": 8,
+        "respiratoryRate": 3,
+        "consciousness": -0.04
+      },
+      "hiddenStateEffects": {
+        "shockRisk": 0.18,
+        "lactate": 0.6,
+        "infectionBurden": 0.08
+      },
+      "patientDialogue": "I don't think I can go home... I feel really unwell.",
+      "learnerFeedback": "This patient has high-risk features and needs urgent treatment/escalation, not discharge."
+    },
+    "giveAntibioticsBeforeCulturesWhenCulturesFeasible": {
+      "label": "Give Antibiotics Before Cultures When Cultures Feasible",
+      "group": "Unsafe actions",
+      "instruction": "Unsafe test action: if cultures can be taken immediately without delaying antibiotics, missing them reduces diagnostic value.",
+      "dangerousTestAction": true,
+      "sequence": 94,
+      "setsState": {
+        "culturesDelayedWithoutReason": true,
+        "antibioticsAdministered": true
+      },
+      "metrics": {
+        "increment": "unsafeActions"
+      },
+      "hiddenStateEffects": {
+        "infectionBurden": -0.04,
+        "shockRisk": -0.02
+      },
+      "learnerFeedback": "Antibiotics are important, but cultures should be taken first when feasible and not delaying treatment."
+    },
+    "leaveFlatWhileBreathless": {
+      "label": "Leave Patient Flat While Breathless",
+      "group": "Unsafe actions",
+      "instruction": "Unsafe test action: leaving a breathless patient flat can worsen respiratory distress.",
+      "dangerousTestAction": true,
+      "sequence": 95,
+      "metrics": {
+        "increment": "unsafeActions"
+      },
+      "effects": {
+        "oxygenSaturation": -2,
+        "respiratoryRate": 3,
+        "consciousness": -0.01
+      },
+      "hiddenStateEffects": {
+        "shockRisk": 0.04
+      },
+      "patientDialogue": "I can't breathe lying like this.",
+      "learnerFeedback": "Positioning should support breathing while assessment and treatment continue."
+    }
+  },
+  "requiredActions": [
+    "confirmIdentityAndIntroduceSelf",
+    "startABCDE",
+    "assessAirway",
+    "assessBreathing",
+    "attachMonitoring",
+    "applyOxygenIfHypoxic",
+    "assessCirculation",
+    "assessDisabilityGlucose",
+    "exposeAndCheckSource",
+    "recogniseSepsis",
+    "callSeniorSepsisHelp",
+    "establishIVAccess",
+    "sendBloodsAndLactate",
+    "takeBloodCultures",
+    "requestAntibiotics",
+    "administerAntibioticsAsPrescribed",
+    "prepareFluidBolus",
+    "giveIVFluidsAsPrescribed",
+    "monitorUrineOutput",
+    "reassessAfterTreatment",
+    "considerCriticalCareIfPoorResponse",
+    "prepareClinicalHandover"
+  ],
+  "passScenarios": {
+    "gold": {
+      "description": "ABCDE, monitoring, oxygen, sepsis recognition, senior escalation, IV access, lactate/bloods, cultures, antibiotics, fluids, urine output monitoring, reassessment, critical care consideration, and handover completed safely.",
+      "conditions": {
+        "primarySurveyStarted": true,
+        "monitoringAttached": true,
+        "oxygenApplied": true,
+        "sepsisRecognised": true,
+        "seniorHelpCalled": true,
+        "ivAccessEstablished": true,
+        "bloodsSent": true,
+        "lactateChecked": true,
+        "bloodCulturesTaken": true,
+        "antibioticsAdministered": true,
+        "ivFluidsGiven": true,
+        "urineOutputMonitoringStarted": true,
+        "reassessmentCompleted": true,
+        "handoverPrepared": true,
+        "bloodPressureSystolic": {
+          "above": 95
+        },
+        "oxygenSaturation": {
+          "above": 94
+        },
+        "consciousness": {
+          "above": 0.78
+        },
+        "unsafeActions": {
+          "below": 1
+        },
+        "averageActionQuality": {
+          "above": 0.7
+        },
+        "requiredActionsCompleted": true
+      },
+      "outcome": "Patient stabilised after early sepsis recognition and initial ED management, awaiting ongoing senior/medical care."
+    }
+  },
+  "failScenarios": {
+    "delayed_sepsis_recognition": {
+      "trigger": {
+        "timeToSepsisRecognitionSeconds": {
+          "above": 120
+        }
+      },
+      "physiologyEffect": {
+        "pulseRate": 6,
+        "bloodPressureSystolic": -5,
+        "respiratoryRate": 2,
+        "lactate": 0.4,
+        "shockRisk": 0.1
+      },
+      "debriefMessage": "Delay in recognising suspected sepsis allowed avoidable deterioration."
+    },
+    "delayed_senior_escalation": {
+      "trigger": {
+        "timeToSeniorEscalationSeconds": {
+          "above": 150
+        }
+      },
+      "physiologyEffect": {
+        "pulseRate": 5,
+        "bloodPressureSystolic": -4,
+        "shockRisk": 0.08
+      },
+      "debriefMessage": "Senior/sepsis escalation was delayed despite high-risk features."
+    },
+    "delayed_antibiotics": {
+      "trigger": {
+        "timeToAntibioticsSeconds": {
+          "above": 180
+        }
+      },
+      "physiologyEffect": {
+        "temperature": 0.4,
+        "pulseRate": 8,
+        "respiratoryRate": 3,
+        "bloodPressureSystolic": -6,
+        "lactate": 0.5,
+        "shockRisk": 0.12
+      },
+      "debriefMessage": "Antibiotics were not given promptly after high-risk suspected sepsis was identified."
+    },
+    "no_fluid_response": {
+      "trigger": {
+        "ivFluidsGiven": false,
+        "bloodPressureSystolic": {
+          "below": 90
+        },
+        "elapsedSeconds": {
+          "above": 150
+        }
+      },
+      "physiologyEffect": {
+        "consciousness": -0.05,
+        "lactate": 0.5,
+        "shockRisk": 0.15
+      },
+      "debriefMessage": "Hypotension and perfusion concerns were not managed with fluid/shock escalation."
+    },
+    "unsafe_discharge": {
+      "trigger": {
+        "inappropriateDischargeAttempted": true
+      },
+      "debriefMessage": "Attempted discharge was unsafe because the patient had high-risk sepsis features."
+    }
+  },
+  "scenarioEndConditions": {
+    "septicShockDeterioration": {
+      "type": "failure",
+      "title": "Patient Deteriorated — Septic Shock",
+      "priority": 1,
+      "requiresAny": [
+        {
+          "bloodPressureSystolic": {
+            "below": 82
+          },
+          "consciousness": {
+            "below": 0.65
+          }
+        },
+        {
+          "lactate": {
+            "above": 5.0
+          },
+          "bloodPressureSystolic": {
+            "below": 90
+          }
+        },
+        {
+          "shockRisk": {
+            "above": 0.88
+          },
+          "respiratoryRate": {
+            "above": 35
+          }
+        },
+        {
+          "unsafeDelayActions": {
+            "above": 2
+          },
+          "bloodPressureSystolic": {
+            "below": 92
+          }
+        },
+        {
+          "inappropriateDischargeAttempted": true
+        }
+      ],
+      "message": "Patient deteriorated with signs of septic shock or unsafe delay. Urgent senior/critical care review is required.",
+      "nextStep": "Proceed to debrief."
+    },
+    "unstableClinicalCompletion": {
+      "type": "partial",
+      "title": "Patient Remains Clinically Unstable",
+      "priority": 2,
+      "requires": {
+        "requiredActionsCompleted": true
+      },
+      "requiresAny": [
+        {
+          "unsafeActions": {
+            "above": 0
+          }
+        },
+        {
+          "averageActionQuality": {
+            "below": 0.7
+          }
+        },
+        {
+          "pulseRate": {
+            "above": 120
+          }
+        },
+        {
+          "respiratoryRate": {
+            "above": 30
+          }
+        },
+        {
+          "bloodPressureSystolic": {
+            "below": 95
+          }
+        },
+        {
+          "oxygenSaturation": {
+            "below": 94
+          }
+        },
+        {
+          "consciousness": {
+            "below": 0.78
+          }
+        },
+        {
+          "lactate": {
+            "above": 3.5
+          }
+        },
+        {
+          "urineOutputMlPerHour": {
+            "below": 20
+          }
+        }
+      ],
+      "message": "The sepsis pathway was attempted, but care quality, unsafe actions, or persistent abnormal observations mean the patient remains clinically unstable. Review debrief for recognition, escalation, antibiotics, fluids, oxygen, monitoring, and reassessment.",
+      "nextStep": "Proceed to debrief."
+    },
+    "successfulSepsisStabilisation": {
+      "type": "success",
+      "title": "Sepsis Stabilised",
+      "priority": 3,
+      "requires": {
+        "primarySurveyStarted": true,
+        "monitoringAttached": true,
+        "oxygenApplied": true,
+        "sepsisRecognised": true,
+        "seniorHelpCalled": true,
+        "ivAccessEstablished": true,
+        "bloodsSent": true,
+        "lactateChecked": true,
+        "bloodCulturesTaken": true,
+        "antibioticsAdministered": true,
+        "ivFluidsGiven": true,
+        "urineOutputMonitoringStarted": true,
+        "reassessmentCompleted": true,
+        "criticalCareConsidered": true,
+        "handoverPrepared": true,
+        "bloodPressureSystolic": {
+          "above": 95
+        },
+        "oxygenSaturation": {
+          "above": 94
+        },
+        "consciousness": {
+          "above": 0.78
+        },
+        "unsafeActions": {
+          "below": 1
+        },
+        "averageActionQuality": {
+          "above": 0.7
+        },
+        "requiredActionsCompleted": true
+      },
+      "message": "Patient stabilised after early sepsis recognition and initial ED management. Infection is not cured, but oxygenation, perfusion, antibiotics, fluids, monitoring, reassessment, escalation, and handover have been managed safely.",
+      "nextStep": "Proceed to debrief."
+    }
+  },
+  "environment": {
+    "location": "emergency-department-assessment-bay",
+    "lighting": "bright-clinical",
+    "timeOfDay": "evening",
+    "availableEquipment": [
+      "ed-trolley",
+      "gloves",
+      "monitor",
+      "pulse-oximeter",
+      "bp-cuff",
+      "ecg-leads",
+      "thermometer",
+      "oxygen",
+      "nasal-cannula",
+      "non-rebreather-mask",
+      "blood-glucose-meter",
+      "iv-cannulation-kit",
+      "blood-bottles",
+      "blood-culture-bottles",
+      "lactate-point-of-care-or-vbg",
+      "fluid-giving-set",
+      "antibiotic-access-within-policy",
+      "urine-output-chart",
+      "catheterisation-equipment-if-indicated",
+      "phone-bleep-system",
+      "sepsis-screening-tool",
+      "handover-template"
+    ],
+    "notAvailableEquipment": [
+      "definitive-source-control-in-room",
+      "vasopressor-infusion-by-learner",
+      "intensive-care-bed-in-room"
+    ],
+    "staffAvailableOnEscalation": [
+      "senior-ed-doctor",
+      "medical-registrar",
+      "senior-nurse",
+      "critical-care-team",
+      "microbiology-advice"
+    ]
+  },
+  "learnerVisibleObjects": {
+    "patient": true,
+    "familyMember": true,
+    "edTrolley": true,
+    "monitor": true,
+    "bpCuff": true,
+    "pulseOximeter": true,
+    "ecgLeads": true,
+    "oxygen": true,
+    "bloodGlucoseMeter": true,
+    "ivEquipment": true,
+    "bloodCultureBottles": true,
+    "bloodBottles": true,
+    "fluidGivingSet": true,
+    "urineOutputChart": true,
+    "sepsisScreeningTool": true,
+    "handoverTemplate": true,
+    "developerVitalsDashboard": false,
+    "floatingDebugValues": false
+  },
+  "debriefMetrics": [
+    "timeToMonitoringSeconds",
+    "timeToSepsisRecognitionSeconds",
+    "timeToSeniorEscalationSeconds",
+    "timeToOxygenSeconds",
+    "timeToIVAccessSeconds",
+    "timeToLactateSeconds",
+    "timeToBloodCulturesSeconds",
+    "timeToAntibioticsSeconds",
+    "timeToFluidsSeconds",
+    "timeToUrineOutputMonitoringSeconds",
+    "unsafeActions",
+    "unsafeDelayActions",
+    "missedActions",
+    "averageActionQuality",
+    "reassuranceCount",
+    "vitalsCheckCount",
+    "reassessmentCount",
+    "minimumBloodPressureSystolic",
+    "maximumPulseRate",
+    "maximumRespiratoryRate",
+    "minimumOxygenSaturation",
+    "minimumConsciousness",
+    "temperatureTrend",
+    "lactate",
+    "lactateTrend",
+    "urineOutputMlPerHour",
+    "shockRisk",
+    "sepsisRecognised",
+    "seniorHelpCalled",
+    "oxygenApplied",
+    "bloodCulturesTaken",
+    "antibioticsAdministered",
+    "ivFluidsGiven",
+    "urineOutputMonitoringStarted",
+    "criticalCareConsidered",
+    "handoverPrepared",
+    "requiredActionsCompleted"
+  ],
+  "dialogueDesign": {
+    "approach": "Hybrid: keep short deterministic safety-critical patient/family lines in this scenario JSON, and store richer adaptive conversation in Pillar 4 LLM dialogue files.",
+    "keepInScenarioJson": [
+      "opening line",
+      "confusion statements",
+      "breathlessness statements",
+      "family collateral prompts",
+      "unsafe-action deterioration responses",
+      "handover-critical symptoms such as low urine output and new confusion"
+    ],
+    "moveToPillar4DialogueFiles": [
+      "extended history taking",
+      "variable emotional responses",
+      "family member conversation",
+      "learner-specific coaching dialogue",
+      "non-critical conversational variation"
+    ],
+    "reason": "The scenario engine needs predictable lines for clinical findings, safety-critical cues, and unsafe-action feedback. Pillar 4 can add natural conversation without breaking assessment logic."
+  },
+  "outcomeDesign": {
+    "endingPriority": [
+      "septicShockDeterioration",
+      "unstableClinicalCompletion",
+      "successfulSepsisStabilisation"
+    ],
+    "rationale": "Critical deterioration should override completion. Poor or unsafe completion should end as unstable rather than success. Success requires safe completion plus improving physiology.",
+    "successDoesNotMean": [
+      "infection cured",
+      "patient discharged",
+      "no further care required"
+    ],
+    "successMeans": "Sepsis was recognised early, initial ED care was started safely, physiology improved enough for ongoing senior/medical management, and structured handover is ready."
+  }
+}
