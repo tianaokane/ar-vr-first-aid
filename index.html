@@ -6,7 +6,14 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #eef1f4; color: #111827; padding: 16px; font-size: 13px; }
-        .monitor { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; max-width: 1280px; margin: 0 auto; }
+        .monitor {
+            display: grid;
+            grid-template-columns: minmax(360px, 1.2fr) minmax(320px, 0.9fr) minmax(360px, 1fr);
+            gap: 12px;
+            max-width: 1600px;
+            margin: 0 auto;
+            align-items: start;
+        }
         .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
         .header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; }
         .dot { width: 9px; height: 9px; border-radius: 50%; background: #dc2626; flex-shrink: 0; }
@@ -41,7 +48,9 @@
         .v-neutral { color: #111827; }
         .skin-row { margin-top: 8px; display: none; align-items: center; gap: 8px; padding: 9px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
         .skin-label { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .right-panel { display: flex; flex-direction: column; gap: 12px; }
+        .right-panel {
+                display: contents;
+            }
         .step { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f8fafc; }
         .step-num { width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid #cbd5e1; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; flex-shrink: 0; }
         .step-num.done { background: #16a34a; border-color: #16a34a; color: #fff; }
@@ -54,7 +63,15 @@
         .actions-group { margin-bottom: 10px; }
         .btn-row { display: flex; gap: 5px; flex-wrap: wrap; }
         .log-panel { grid-column: 1 / -1; }
-        .log { height: 145px; overflow-y: auto; font-size: 11px; font-family: 'SF Mono', Consolas, monospace; display: flex; flex-direction: column; gap: 2px; }
+        .log {
+            height: 120px;
+            overflow-y: auto;
+            font-size: 11px;
+            font-family: 'SF Mono', Consolas, monospace;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
         .log-entry { display: flex; gap: 9px; padding: 3px 0; border-bottom: 1px solid #f8fafc; }
         .log-t { color: #94a3b8; min-width: 48px; flex-shrink: 0; }
         .log-msg { color: #64748b; }
@@ -63,7 +80,41 @@
         .log-err { color: #dc2626; }
         .log-info { color: #2563eb; }
         .small-note { font-size: 11px; color: #64748b; line-height: 1.35; }
-        @media (max-width: 900px) { .monitor { grid-template-columns: 1fr; } }
+        .scroll-panel {
+            max-height: 520px;
+            overflow-y: auto;
+        }
+
+        .actions-scroll {
+            max-height: 520px;
+            overflow-y: auto;
+        }
+
+        .actions-group {
+            margin-bottom: 8px;
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 6px;
+        }
+
+        .btn-row button {
+            width: 100%;
+            text-align: left;
+            line-height: 1.2;
+        }
+        @media (max-width: 1100px) {
+            .monitor {
+                grid-template-columns: 1fr;
+            }
+
+            .scroll-panel,
+            .actions-scroll {
+                max-height: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -89,7 +140,7 @@
         <span class="small-note">This is a developer logic dashboard. Final VR should show only learner-visible clinical information.</span>
     </div>
 
-    <div class="card">
+   <div class="card">
         <div class="section-title">Physiology / debug state</div>
         <div class="vitals-grid" id="vitalsGrid"></div>
         <div class="skin-row" id="skinAssessment">
@@ -98,16 +149,14 @@
         </div>
     </div>
 
-    <div class="right-panel">
-        <div class="card">
-            <div class="section-title">Scenario protocol</div>
-            <div id="stepList"></div>
-        </div>
+    <div class="card scroll-panel">
+        <div class="section-title">Scenario protocol</div>
+        <div id="stepList"></div>
+    </div>
 
-        <div class="card">
-            <div class="section-title">Scenario actions</div>
-            <div id="actionsList"></div>
-        </div>
+    <div class="card actions-scroll">
+        <div class="section-title">Scenario actions</div>
+        <div id="actionsList"></div>
     </div>
 
     <div class="log-panel card">
@@ -118,18 +167,20 @@
 
 <script type="module">
     import { PatientStateModel } from './core/PatientStateModel.js'
+    import { DialogueEngine } from './core/DialogueEngine.js'
 
     // Add every scenario JSON here. The dashboard is generic after this.
     // You can also load a specific scenario using: index.html?scenario=-fractued-femur-adult
     const scenarioFiles = [
         'cardiac-arrest-adult',
         'fractured-femur-adult',
-        'anaphylaxis-pediatric',
+        'anaphylaxis-paediatric',
         'sepsis-adult'
     ]
 
     let scenario = null
     let model = null
+    let dialogueEngine = null
     let completed = new Set()
     let orderedSteps = []
 
@@ -189,33 +240,72 @@
     })
 
     async function loadScenario(id) {
-        if (model?.isRunning) model.stop('scenario_reload')
+    if (model?.isRunning) model.stop('scenario_reload')
+
+    try {
+        const response = await fetch(`./scenarios/${id}.json`, { cache: 'no-store' })
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+
+        const scenarioText = await response.text()
+
+        if (!scenarioText.trim()) {
+            throw new Error(`Scenario file is empty: ./scenarios/${id}.json`)
+        }
 
         try {
-            const response = await fetch(`./scenarios/${id}.json`, { cache: 'no-store' })
-            if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
-            scenario = await response.json()
-            model = new PatientStateModel(scenario)
-            window.model = model
-            window.scenario = scenario
-            completed = new Set()
-
-            patchTickForUI()
-            renderScenarioHeader()
-            renderChecklist()
-            renderActions()
-            updateAll()
-
-            els.dot.classList.remove('live')
-            els.statusText.textContent = 'Stopped'
-            clearLog()
-            addLog(`Scenario loaded: ${scenario.scenarioName ?? scenario.scenarioId ?? id}`, 'info')
-            addLog(`Patient: ${patientText()}`, 'msg')
-        } catch (err) {
-            addLog(`Could not load scenario '${id}': ${err.message}`, 'err')
-            console.error(err)
+            scenario = JSON.parse(scenarioText)
+        } catch (jsonError) {
+            throw new Error(`Invalid JSON in ./scenarios/${id}.json: ${jsonError.message}`)
         }
+
+        model = new PatientStateModel(scenario)
+        window.model = model
+        window.scenario = scenario
+        completed = new Set()
+
+        const dialogueResponse = await fetch(`./dialogue/${id}-dialogue.json`, { cache: 'no-store' })
+
+        if (dialogueResponse.ok) {
+            const dialogueText = await dialogueResponse.text()
+
+            if (!dialogueText.trim()) {
+                throw new Error(`Dialogue file is empty: ./dialogue/${id}-dialogue.json`)
+            }
+
+            try {
+                const dialogueData = JSON.parse(dialogueText)
+                dialogueEngine = new DialogueEngine(dialogueData, model)
+                window.dialogueEngine = dialogueEngine
+            } catch (jsonError) {
+                throw new Error(`Invalid JSON in ./dialogue/${id}-dialogue.json: ${jsonError.message}`)
+            }
+        } else {
+            dialogueEngine = null
+            window.dialogueEngine = null
+        }
+
+        patchTickForUI()
+        renderScenarioHeader()
+        renderChecklist()
+        renderActions()
+        updateAll()
+
+        els.dot.classList.remove('live')
+        els.statusText.textContent = 'Stopped'
+        clearLog()
+        addLog(`Scenario loaded: ${scenario.scenarioName ?? scenario.scenarioId ?? id}`, 'info')
+        addLog(`Patient: ${patientText()}`, 'msg')
+
+        if (dialogueEngine) {
+            addLog(`Dialogue loaded: ${id}-dialogue.json`, 'info')
+        } else {
+            addLog(`No dialogue file found for ${id}`, 'warn')
+        }
+    } catch (err) {
+        addLog(`Could not load scenario '${id}': ${err.message}`, 'err')
+        console.error(err)
     }
+}
 
     function patchTickForUI() {
         const originalTick = model._tick.bind(model)
