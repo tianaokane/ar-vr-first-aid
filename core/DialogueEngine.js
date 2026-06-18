@@ -34,6 +34,10 @@ export class DialogueEngine {
     const state = currentState || this.getCurrentState();
     const stateCategory = this.getStateCategory(state);
 
+    if (this.isCardiacArrestWithNoSpeech(state)) {
+      return "";
+    }
+
     if (stateCategory === "unconscious") {
       return "";
     }
@@ -73,6 +77,10 @@ export class DialogueEngine {
   generateResponse(traineeText, state, context = {}) {
     const cleanedText = traineeText.toLowerCase().trim();
     const stateCategory = this.getStateCategory(state);
+
+    if (this.isCardiacArrestWithNoSpeech(state)) {
+      return "";
+    }
 
     if (stateCategory === "unconscious") {
       return "";
@@ -347,15 +355,54 @@ export class DialogueEngine {
     return 120;
   }
 
+  isCardiacArrestWithNoSpeech(state = {}) {
+    const scenarioId = this.dialogueData?.scenarioId;
+    const rhythmState = state.rhythmState;
+    const consciousness = this.getNumericStateValue(state, "consciousness", 1);
+    const pulseRate = this.getNumericStateValue(state, "pulseRate", 60);
+    const respiratoryRate = this.getNumericStateValue(state, "respiratoryRate", 12);
+
+    const isCardiacArrestScenario = scenarioId === "cardiac-arrest-adult";
+    const isInArrest = rhythmState === "arrest" || rhythmState === "rosc_pending";
+    const isUnresponsive =
+      consciousness <= 0.05 ||
+      pulseRate <= 0 ||
+      respiratoryRate <= 0;
+
+    return isCardiacArrestScenario && isInArrest && isUnresponsive;
+  }
+
   getCurrentState() {
-    if (
-      this.patientStateModel &&
-      typeof this.patientStateModel.getCurrentState === "function"
-    ) {
-      return this.patientStateModel.getCurrentState();
+    if (!this.patientStateModel) {
+      return {};
     }
 
-    return {};
+    const model = this.patientStateModel;
+
+    // Preferred method if your model provides it
+    if (typeof model.getCurrentState === "function") {
+      return model.getCurrentState();
+    }
+
+    // Fallback for your current PatientStateModel structure
+    const state = {
+      rhythmState: model.rhythmState,
+      arrestRhythm: model.arrestRhythm
+    };
+
+    if (model.parameters) {
+      for (const [key, parameter] of Object.entries(model.parameters)) {
+        if (parameter && typeof parameter === "object" && "value" in parameter) {
+          state[key] = parameter.value;
+        }
+      }
+    }
+
+    if (model.simulationState) {
+      Object.assign(state, model.simulationState);
+    }
+
+    return state;
   }
 
   logMessage(speaker, text, metadata = {}) {
