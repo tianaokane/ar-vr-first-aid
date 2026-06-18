@@ -2,26 +2,534 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AR/VR First Aid — PSM Test</title>
+    <title>AR/VR First Aid — Scenario Logic Test</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #eef1f4; color: #111827; padding: 16px; font-size: 13px; }
+        .monitor { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; max-width: 1280px; margin: 0 auto; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+        .header { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: #dc2626; flex-shrink: 0; }
+        .dot.live { background: #16a34a; animation: pulse 1.2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .status-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .patient { font-size: 15px; font-weight: 700; }
+        .scenario { font-size: 12px; color: #64748b; margin-top: 1px; }
+        .elapsed { margin-left: auto; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; border: 1px solid transparent; }
+        .badge-red { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+        .badge-green { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+        .badge-blue { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; }
+        .toolbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        select, button { font: inherit; font-size: 12px; border-radius: 7px; border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; padding: 7px 10px; cursor: pointer; }
+        button:hover, select:hover { background: #f1f5f9; }
+        button:active { transform: scale(0.98); }
+        .btn-primary { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 700; }
+        .btn-green { background: #f0fdf4; border-color: #86efac; color: #15803d; font-weight: 700; }
+        .btn-danger { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; font-weight: 700; }
+        .section-title { font-size: 10px; font-weight: 800; color: #64748b; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+        .vitals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; }
+        .vital { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; position: relative; overflow: hidden; min-height: 86px; }
+        .vital-label { font-size: 10px; font-weight: 800; color: #94a3b8; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 7px; }
+        .vital-value { font-size: 28px; font-weight: 850; line-height: 1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+        .vital-value.text { font-size: 18px; line-height: 1.15; }
+        .vital-unit { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+        .vital-bar { position: absolute; bottom: 0; left: 0; height: 3px; transition: width 0.4s, background-color 0.4s; }
+        .v-ok { color: #16a34a; }
+        .v-warn { color: #d97706; }
+        .v-crit { color: #dc2626; }
+        .v-neutral { color: #111827; }
+        .skin-row { margin-top: 8px; display: none; align-items: center; gap: 8px; padding: 9px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .skin-label { font-size: 10px; color: #94a3b8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+        .right-panel { display: flex; flex-direction: column; gap: 12px; }
+        .step { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f8fafc; }
+        .step-num { width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid #cbd5e1; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; flex-shrink: 0; }
+        .step-num.done { background: #16a34a; border-color: #16a34a; color: #fff; }
+        .step-num.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+        .step-label { font-size: 12px; font-weight: 750; color: #64748b; }
+        .step-label.done { color: #94a3b8; text-decoration: line-through; font-weight: 500; }
+        .step-label.active { color: #2563eb; }
+        .step-hint { font-size: 10px; color: #94a3b8; margin-top: 2px; line-height: 1.25; }
+        .step-divider, .group-label { font-size: 9px; font-weight: 900; color: #cbd5e1; letter-spacing: 1px; text-transform: uppercase; padding: 8px 0 3px; }
+        .actions-group { margin-bottom: 10px; }
+        .btn-row { display: flex; gap: 5px; flex-wrap: wrap; }
+        .log-panel { grid-column: 1 / -1; }
+        .log { height: 145px; overflow-y: auto; font-size: 11px; font-family: 'SF Mono', Consolas, monospace; display: flex; flex-direction: column; gap: 2px; }
+        .log-entry { display: flex; gap: 9px; padding: 3px 0; border-bottom: 1px solid #f8fafc; }
+        .log-t { color: #94a3b8; min-width: 48px; flex-shrink: 0; }
+        .log-msg { color: #64748b; }
+        .log-ok { color: #16a34a; }
+        .log-warn { color: #d97706; }
+        .log-err { color: #dc2626; }
+        .log-info { color: #2563eb; }
+        .small-note { font-size: 11px; color: #64748b; line-height: 1.35; }
+        @media (max-width: 900px) { .monitor { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-    <h2>PatientStateModel — scenario test</h2>
-    <p>Open the browser console to see the simulation running.</p>
-    <button onclick="window.model?.start()">Start</button>
-    <button onclick="window.model?.stop()">Stop</button>
+<div class="monitor">
+    <div class="header card">
+        <div class="dot" id="dot"></div>
+        <div>
+            <div class="status-label" id="statusText">Stopped</div>
+            <div class="patient" id="patientLabel">—</div>
+            <div class="scenario" id="scenarioLabel">—</div>
+        </div>
+        <span id="rhythmBadge" class="badge badge-red" style="display:none">—</span>
+        <div class="elapsed" id="timeDisplay">t=0s</div>
+    </div>
 
-    <script type="module">
-        import { PatientStateModel } from './core/PatientStateModel.js'
+    <div class="toolbar card">
+        <label class="status-label" for="scenarioSelect">Scenario</label>
+        <select id="scenarioSelect"></select>
+        <button class="btn-primary" id="btnLoadScenario">Load</button>
+        <button class="btn-green" id="btnStart">▶ Start</button>
+        <button id="btnStop">■ Stop</button>
+        <button id="btnReset">↺ Reset</button>
+        <span class="small-note">This is a developer logic dashboard. Final VR should show only learner-visible clinical information.</span>
+    </div>
 
-        // fetch the scenario JSON, then create the model with it
-        const response = await fetch('./scenarios/broken-leg-adult.json')
-        const scenario = await response.json()
+    <div class="card">
+        <div class="section-title">Physiology / debug state</div>
+        <div class="vitals-grid" id="vitalsGrid"></div>
+        <div class="skin-row" id="skinAssessment">
+            <span class="skin-label">Assessment</span>
+            <span id="skinSiteText" style="font-size:11px;color:#334155"></span>
+        </div>
+    </div>
 
-        const model = new PatientStateModel(scenario)
-        window.model = model
+    <div class="right-panel">
+        <div class="card">
+            <div class="section-title">Scenario protocol</div>
+            <div id="stepList"></div>
+        </div>
 
-        console.log('Scenario loaded:', scenario.scenarioName)
-        console.log('Initial state:', model.parameters)
-    </script>
+        <div class="card">
+            <div class="section-title">Scenario actions</div>
+            <div id="actionsList"></div>
+        </div>
+    </div>
+
+    <div class="log-panel card">
+        <div class="section-title">Event log</div>
+        <div class="log" id="eventLog"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { PatientStateModel } from './core/PatientStateModel.js'
+
+    // Add every scenario JSON here. The dashboard is generic after this.
+    // You can also load a specific scenario using: index.html?scenario=broken-leg-adult
+    const scenarioFiles = [
+        'cardiac-arrest-adult',
+        'broken-leg-adult',
+        'choking-adult',
+        'trauma-bleeding-adult',
+        'anaphylaxis-adult',
+        'stroke-adult',
+        'diabetic-emergency-adult',
+        'choking-paediatric'
+    ]
+
+    let scenario = null
+    let model = null
+    let completed = new Set()
+    let orderedSteps = []
+
+    const els = {
+        dot: document.getElementById('dot'),
+        statusText: document.getElementById('statusText'),
+        patientLabel: document.getElementById('patientLabel'),
+        scenarioLabel: document.getElementById('scenarioLabel'),
+        rhythmBadge: document.getElementById('rhythmBadge'),
+        timeDisplay: document.getElementById('timeDisplay'),
+        scenarioSelect: document.getElementById('scenarioSelect'),
+        vitalsGrid: document.getElementById('vitalsGrid'),
+        skinAssessment: document.getElementById('skinAssessment'),
+        skinSiteText: document.getElementById('skinSiteText'),
+        stepList: document.getElementById('stepList'),
+        actionsList: document.getElementById('actionsList'),
+        eventLog: document.getElementById('eventLog')
+    }
+
+    for (const id of scenarioFiles) {
+        const option = document.createElement('option')
+        option.value = id
+        option.textContent = id
+        els.scenarioSelect.appendChild(option)
+    }
+
+    const requestedScenario = new URLSearchParams(window.location.search).get('scenario')
+    if (requestedScenario && scenarioFiles.includes(requestedScenario)) {
+        els.scenarioSelect.value = requestedScenario
+    }
+
+    await loadScenario(els.scenarioSelect.value)
+
+    document.getElementById('btnLoadScenario').addEventListener('click', async () => {
+        await loadScenario(els.scenarioSelect.value)
+    })
+
+    document.getElementById('btnStart').addEventListener('click', () => {
+        const result = model.start()
+        if (result.ok) {
+            els.dot.classList.add('live')
+            els.statusText.textContent = 'Running'
+            addLog('Simulation started', 'info')
+        }
+        updateAll()
+    })
+
+    document.getElementById('btnStop').addEventListener('click', () => {
+        model.stop('manual_stop')
+        els.dot.classList.remove('live')
+        els.statusText.textContent = 'Stopped manually'
+        updateAll()
+    })
+
+    document.getElementById('btnReset').addEventListener('click', async () => {
+        await loadScenario(els.scenarioSelect.value)
+    })
+
+    async function loadScenario(id) {
+        if (model?.isRunning) model.stop('scenario_reload')
+
+        try {
+            const response = await fetch(`./scenarios/${id}.json`, { cache: 'no-store' })
+            if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
+            scenario = await response.json()
+            model = new PatientStateModel(scenario)
+            window.model = model
+            window.scenario = scenario
+            completed = new Set()
+
+            patchTickForUI()
+            renderScenarioHeader()
+            renderChecklist()
+            renderActions()
+            updateAll()
+
+            els.dot.classList.remove('live')
+            els.statusText.textContent = 'Stopped'
+            clearLog()
+            addLog(`Scenario loaded: ${scenario.scenarioName ?? scenario.scenarioId ?? id}`, 'info')
+            addLog(`Patient: ${patientText()}`, 'msg')
+        } catch (err) {
+            addLog(`Could not load scenario '${id}': ${err.message}`, 'err')
+            console.error(err)
+        }
+    }
+
+    function patchTickForUI() {
+        const originalTick = model._tick.bind(model)
+
+        model._tick = function () {
+            originalTick()
+            updateAll()
+
+            if (!model.isRunning) {
+                els.dot.classList.remove('live')
+                updateStatusFromModel()
+            }
+        }
+    }
+
+    function updateStatusFromModel() {
+        const outcome = model?.getScenarioOutcome?.()
+
+        if (!outcome) {
+            els.statusText.textContent = model?.isRunning ? 'Running' : 'Stopped'
+            return
+        }
+
+        if (outcome.type === 'success') {
+            els.statusText.textContent = `Completed — ${outcome.title}`
+            return
+        }
+
+        if (outcome.type === 'failure') {
+            els.statusText.textContent = `Ended — ${outcome.title}`
+            return
+        }
+
+        els.statusText.textContent = outcome.title ?? 'Completed'
+    }
+
+    function renderScenarioHeader() {
+        els.patientLabel.textContent = patientText()
+        els.scenarioLabel.textContent = scenario.scenarioName ?? scenario.scenarioId ?? 'Untitled scenario'
+        updateRhythm()
+    }
+
+    function patientText() {
+        const p = scenario?.patient ?? {}
+        const name = p.name ?? 'Unnamed patient'
+        const age = p.age !== undefined ? `${p.age}` : '—'
+        const sex = p.sex ? String(p.sex)[0].toUpperCase() : '—'
+        return `${name} · ${age}${sex}`
+    }
+
+    function renderChecklist() {
+        els.stepList.innerHTML = ''
+        const actions = scenario.actionMappings ?? {}
+        const required = scenario.requiredActions ?? Object.keys(actions).sort((a, b) => (actions[a].sequence ?? 999) - (actions[b].sequence ?? 999))
+        orderedSteps = required.map(id => ({ id, action: actions[id] ?? { label: id } }))
+
+        if (!orderedSteps.length) {
+            els.stepList.innerHTML = '<p class="small-note">No requiredActions defined for this scenario.</p>'
+            return
+        }
+
+        let lastGroup = null
+        orderedSteps.forEach((step, index) => {
+            const group = step.action.group ?? step.action.phase ?? step.action.category ?? null
+            if (group && group !== lastGroup) {
+                const divider = document.createElement('div')
+                divider.className = 'step-divider'
+                divider.textContent = group
+                els.stepList.appendChild(divider)
+                lastGroup = group
+            }
+
+            const div = document.createElement('div')
+            div.className = 'step'
+            div.dataset.stepId = step.id
+            div.innerHTML = `
+                <div class="step-num ${index === 0 ? 'active' : ''}" id="num_${cssSafe(step.id)}">${index + 1}</div>
+                <div>
+                    <div class="step-label ${index === 0 ? 'active' : ''}" id="lbl_${cssSafe(step.id)}">${step.action.label ?? step.id}</div>
+                    <div class="step-hint">${step.action.instruction ?? step.action.hint ?? ''}</div>
+                </div>`
+            els.stepList.appendChild(div)
+        })
+    }
+
+    function renderActions() {
+        els.actionsList.innerHTML = ''
+        const actions = scenario.actionMappings ?? {}
+        const entries = Object.entries(actions).sort(([, a], [, b]) => (a.sequence ?? 999) - (b.sequence ?? 999))
+
+        if (!entries.length) {
+            els.actionsList.innerHTML = '<p class="small-note">No actionMappings defined for this scenario.</p>'
+            return
+        }
+
+        const groups = new Map()
+        for (const [id, action] of entries) {
+            const group = action.group ?? action.phase ?? action.category ?? inferGroup(id, action)
+            if (!groups.has(group)) groups.set(group, [])
+            groups.get(group).push([id, action])
+        }
+
+        for (const [group, groupActions] of groups.entries()) {
+            const wrapper = document.createElement('div')
+            wrapper.className = 'actions-group'
+
+            const label = document.createElement('div')
+            label.className = 'group-label'
+            label.textContent = group
+            wrapper.appendChild(label)
+
+            const row = document.createElement('div')
+            row.className = 'btn-row'
+
+            for (const [id, action] of groupActions) {
+                const button = document.createElement('button')
+                button.textContent = action.label ?? id
+                button.title = action.instruction ?? ''
+                button.className = buttonClassFor(id, action)
+                button.addEventListener('click', () => runAction(id, action.defaultQuality ?? 1.0))
+                row.appendChild(button)
+
+                if (action.allowQualityTest !== false && !action.completionOnly) {
+                    const poor = document.createElement('button')
+                    poor.textContent = `${action.label ?? id} — poor`
+                    poor.title = 'Test this action with qualityScore 0.4'
+                    poor.addEventListener('click', () => runAction(id, 0.4))
+                    row.appendChild(poor)
+                }
+            }
+
+            wrapper.appendChild(row)
+            els.actionsList.appendChild(wrapper)
+        }
+    }
+
+    function runAction(actionId, quality) {
+        const result = model.applyAction(actionId, quality)
+
+        if (result?.ok) {
+            markStep(actionId)
+            if (result.message) addLog(result.message, 'info')
+        } else {
+            addLog(result?.message ?? `Action failed: ${actionId}`, 'warn')
+        }
+
+        updateAll()
+    }
+
+    function markStep(id) {
+        if (completed.has(id)) return
+        completed.add(id)
+
+        const num = document.getElementById(`num_${cssSafe(id)}`)
+        const lbl = document.getElementById(`lbl_${cssSafe(id)}`)
+        if (num) { num.className = 'step-num done'; num.textContent = '✓' }
+        if (lbl) lbl.className = 'step-label done'
+
+        const next = orderedSteps.find(step => !completed.has(step.id))
+        if (next) {
+            const n = document.getElementById(`num_${cssSafe(next.id)}`)
+            const l = document.getElementById(`lbl_${cssSafe(next.id)}`)
+            if (n && !n.classList.contains('done')) n.className = 'step-num active'
+            if (l && !l.classList.contains('done')) l.className = 'step-label active'
+        }
+    }
+
+    function updateAll() {
+        updateVitals()
+        updateRhythm()
+        els.timeDisplay.textContent = `t=${model?._elapsedSeconds?.() ?? 0}s`
+    }
+
+    function updateVitals() {
+        if (!model) return
+        els.vitalsGrid.innerHTML = ''
+        const params = model.getDisplayParameters({ includeHidden: true })
+
+        for (const param of params) {
+            const card = document.createElement('div')
+            card.className = 'vital'
+
+            const valueInfo = formatValue(param)
+            card.innerHTML = `
+                <div class="vital-label">${param.label ?? param.id}</div>
+                <div class="vital-value ${valueInfo.isText ? 'text' : ''} ${classForParam(param)}">${valueInfo.text}</div>
+                <div class="vital-unit">${param.unit ?? ''}</div>
+                <div class="vital-bar" style="width:${barPercent(param)}%; background:${barColour(param)}"></div>`
+            els.vitalsGrid.appendChild(card)
+        }
+
+        const skin = model.parameters?.skinColour?.value
+        if (skin?.assessmentSite && skin.state !== 'normal') {
+            els.skinAssessment.style.display = 'flex'
+            els.skinSiteText.textContent = skin.assessmentSite
+        } else {
+            els.skinAssessment.style.display = 'none'
+        }
+    }
+
+    function updateRhythm() {
+        if (!model) return
+        els.rhythmBadge.style.display = 'inline-flex'
+        const rhythm = model.rhythmState ?? 'unknown'
+        els.rhythmBadge.textContent = rhythm
+        els.rhythmBadge.className = rhythm === 'rosc'
+            ? 'badge badge-green'
+            : rhythm === 'arrest'
+                ? 'badge badge-red'
+                : 'badge badge-blue'
+    }
+
+    function formatValue(param) {
+        if (param.id === 'skinColour') {
+            return { text: param.value?.state ?? 'normal', isText: true }
+        }
+
+        if (param.value === null || param.value === undefined) return { text: '—', isText: true }
+        if (typeof param.value === 'number') {
+            const decimals = param.decimals ?? 1
+            return { text: param.value.toFixed(decimals), isText: false }
+        }
+        return { text: String(param.value), isText: true }
+    }
+
+    function classForParam(param) {
+        if (typeof param.value !== 'number') return 'v-neutral'
+        if (param.criticalBelow !== null && param.value <= param.criticalBelow) return 'v-crit'
+        if (param.criticalAbove !== null && param.value >= param.criticalAbove) return 'v-crit'
+
+        if (Number.isFinite(param.min) && Number.isFinite(param.max)) {
+            const pct = (param.value - param.min) / (param.max - param.min)
+            if (pct < 0.3) return 'v-warn'
+        }
+
+        return 'v-ok'
+    }
+
+    function barPercent(param) {
+        if (typeof param.value !== 'number') return 0
+        if (!Number.isFinite(param.min) || !Number.isFinite(param.max) || param.max === param.min) return 50
+        return Math.max(0, Math.min(100, ((param.value - param.min) / (param.max - param.min)) * 100))
+    }
+
+    function barColour(param) {
+        const cls = classForParam(param)
+        if (cls === 'v-crit') return '#dc2626'
+        if (cls === 'v-warn') return '#d97706'
+        if (cls === 'v-ok') return '#16a34a'
+        return '#cbd5e1'
+    }
+
+    function inferGroup(id, action) {
+        const text = `${id} ${action.label ?? ''}`.toLowerCase()
+        if (text.includes('cpr') || text.includes('compression') || text.includes('breath')) return 'CPR / ventilation'
+        if (text.includes('aed') || text.includes('shock') || text.includes('defib')) return 'Defibrillation'
+        if (text.includes('oxygen') || text.includes('recovery') || text.includes('monitor')) return 'Post-event care'
+        if (text.includes('call')) return 'Call for help'
+        if (text.includes('airway') || text.includes('breathing') || text.includes('response')) return 'Assessment'
+        return 'Actions'
+    }
+
+    function buttonClassFor(id, action) {
+        const text = `${id} ${action.label ?? ''}`.toLowerCase()
+        if (text.includes('oxygen') || text.includes('recovery') || text.includes('monitor')) return 'btn-green'
+        if (text.includes('shock') || text.includes('defib') || text.includes('aed') || text.includes('cpr')) return 'btn-primary'
+        if (action.dangerousTestAction) return 'btn-danger'
+        return ''
+    }
+
+    function addLog(msg, type = 'msg') {
+        const t = model?.isRunning ? `t=${model._elapsedSeconds()}s` : '—'
+        const e = document.createElement('div')
+        e.className = 'log-entry'
+        e.innerHTML = `<span class="log-t">${t}</span><span class="log-${type}">${escapeHtml(String(msg))}</span>`
+        els.eventLog.appendChild(e)
+        els.eventLog.scrollTop = els.eventLog.scrollHeight
+    }
+
+    function clearLog() {
+        els.eventLog.innerHTML = ''
+    }
+
+    const nativeLog = console.log.bind(console)
+    const nativeWarn = console.warn.bind(console)
+    console.log = (...args) => {
+        nativeLog(...args)
+        const msg = args.join(' ')
+        if (msg.includes('[action]')) addLog(msg, 'ok')
+        else if (msg.includes('[rhythm]')) addLog(msg, 'info')
+        else if (msg.includes('[scenario outcome]')) addLog(msg, 'info')
+        else if (!msg.includes('[t=')) addLog(msg, 'msg')
+    }
+    console.warn = (...args) => {
+        nativeWarn(...args)
+        addLog(args.join(' '), 'warn')
+    }
+
+    function cssSafe(id) {
+        return String(id).replace(/[^a-zA-Z0-9_-]/g, '_')
+    }
+
+    function escapeHtml(str) {
+        return str
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;')
+    }
+</script>
 </body>
 </html>

@@ -1,90 +1,944 @@
 {
-    "scenarioId": "cardiac-arrest-adult",
-    "scenarioName": "Cardiac Arrest — Adult",
-    "description": "A 55-year-old male collapses in the corridor. No pulse detected.",
+  "schemaVersion": "2.0-clinical",
+  "scenarioId": "cardiac-arrest-adult",
+  "scenarioName": "Cardiac Arrest — Adult",
+  "description": "A 55-year-old male collapses in an A&E corridor. He is found unresponsive and not breathing normally. This scenario trains recognition of cardiac arrest, early CPR, AED use, and immediate post-ROSC care.",
 
-    "patient": {
-        "name": "James Brennan",
-        "age": 55,
-        "sex": "male",
-        "build": "overweight",
-        "skinTone": "fitzpatrick_2",
-        "medicalHistory": ["hypertension", "type2diabetes"],
-        "personality": "unresponsive",
-        "presentingColour": null
+  "clinicalContext": {
+    "setting": "hospital-ae-corridor",
+    "audiences": ["first_aider", "nursing_student", "medical_student"],
+    "trainingLevel": "basic_to_intermediate",
+    "clinicalModelType": "rule_based_training_simulation",
+    "importantNote": "The internal physiology model supports training decisions and debriefing. It is not a patient-specific clinical prediction model."
+  },
+
+  "guidelineAnchors": {
+    "recognition": "Unresponsive with absent or abnormal breathing should be treated as cardiac arrest.",
+    "cprQuality": {
+      "compressionRatePerMinute": { "min": 100, "max": 120 },
+      "compressionDepthCm": { "min": 5, "max": 6 },
+      "ventilationRatio": "30 compressions to 2 rescue breaths when trained and able",
+      "minimiseInterruptions": true
     },
-
-    "vitals": {
-        "pulseRate":             { "initial": 0,    "drift": 0,      "criticalBelow": 40,  "criticalAbove": 150  },
-        "oxygenSaturation":      { "initial": 70,   "drift": -0.3,   "criticalBelow": 85,  "criticalAbove": null },
-        "consciousness":         { "initial": 0.0,  "drift": 0,      "criticalBelow": 0.3, "criticalAbove": null },
-        "respiratoryRate":       { "initial": 0,    "drift": 0,      "criticalBelow": 8,   "criticalAbove": 40   },
-        "painScore":             { "initial": 0,    "drift": 0,      "criticalBelow": null,"criticalAbove": null },
-        "bloodPressureSystolic": { "initial": 40,   "drift": -0.1,   "criticalBelow": 70,  "criticalAbove": 180  },
-        "temperature":           { "initial": 36.8, "drift": -0.001, "criticalBelow": 35,  "criticalAbove": 39.5 }
+    "defibrillation": {
+      "retrieveAndApplyPadsDuringCPR": true,
+      "shockAsEarlyAsAppropriate": true,
+      "minimisePreShockAndPostShockPauses": true,
+      "resumeCPRImmediatelyAfterShock": true
     },
-
-    "couplings": [
-        {
-            "if": "pulseRate",
-            "below": 20,
-            "effects": {
-                "oxygenSaturation": -1.5,
-                "consciousness": -0.05,
-                "bloodPressureSystolic": -1.0,
-                "respiratoryRate": -0.3
-            },
-            "reason": "near-zero cardiac output causes systemic cascade"
-        },
-        {
-            "if": "oxygenSaturation",
-            "below": 85,
-            "effects": {
-                "consciousness": -0.02,
-                "pulseRate": -0.2
-            },
-            "reason": "severe hypoxia causes brain injury and cardiac arrhythmia"
-        },
-        {
-            "if": "bloodPressureSystolic",
-            "below": 70,
-            "effects": {
-                "consciousness": -0.02,
-                "oxygenSaturation": -0.3
-            },
-            "reason": "circulatory shock — poor perfusion to all organs"
-        },
-        {
-            "if": "respiratoryRate",
-            "below": 4,
-            "effects": {
-                "oxygenSaturation": -1.0
-            },
-            "reason": "respiratory failure — no gas exchange"
-        },
-        {
-            "if": "consciousness",
-            "below": 0.2,
-            "effects": {
-                "respiratoryRate": -0.15,
-                "oxygenSaturation": -0.3
-            },
-            "reason": "unconscious patient loses airway patency"
-        }
-    ],
-
-    "requiredActions": [
-        "callForHelp",
-        "checkResponse",
-        "openAirway",
-        "checkBreathing",
-        "cprCompressions",
-        "aedApplication"
-    ],
-
-    "environment": {
-        "location": "hospital-corridor",
-        "lighting": "bright",
-        "timeOfDay": "morning"
+    "postROSC": {
+      "useABCDEApproach": true,
+      "targetSpO2WhenReliable": { "min": 94, "max": 98 },
+      "avoidHypoxaemia": true,
+      "avoidHyperoxaemia": true,
+      "targetSystolicBP": { "min": 100 }
     }
+  },
+
+  "rhythmState": "arrest",
+  "arrestRhythm": "shockable_vf",
+
+  "patient": {
+    "name": "James Brennan",
+    "age": 55,
+    "sex": "male",
+    "build": "overweight",
+    "skinTone": "fitzpatrick_2",
+    "medicalHistory": ["hypertension", "type2diabetes"],
+    "personality": "unresponsive",
+    "presentingColour": "pale_cyanotic",
+    "visiblePresentation": [
+      "collapsed on floor",
+      "unresponsive to voice and shoulder tap",
+      "not breathing normally",
+      "no purposeful movement",
+      "pale/cyanotic appearance",
+      "no palpable carotid pulse when checked by trained learner"
+    ]
+  },
+
+  "simulationState": {
+    "airwayOpen": false,
+    "breathingNormally": false,
+    "palpablePulsePresent": false,
+
+    "cprInProgress": false,
+    "effectiveVentilation": false,
+
+    "oxygenApplied": false,
+
+    "aedPadsApplied": false,
+    "shockAdvised": false,
+    "shockDelivered": false,
+    "needsCPRAfterShock": false,
+
+    "roscAchieved": false,
+
+    "pulseOxProbeAttached": false,
+    "bpCuffAttached": false,
+    "ecgMonitoringAttached": false,
+
+    "brainHypoxiaBurden": 0,
+    "timeWithoutEffectiveCPR": 0,
+    "timeSinceROSC": null,
+
+    "vitalsMonitoringStarted": false
+  },
+
+  "metrics": {
+    "timeToFirstCPRSeconds": null,
+    "timeToFirstShockSeconds": null,
+    "recentCPRQuality": 0,
+    "averageCPRQuality": 0,
+    "cprAttemptCount": 0,
+    "shockCount": 0,
+    "unsafeActions": 0,
+    "missedActions": 0
+  },
+
+  "vitals": {
+    "pulseRate": {
+      "initial": 0,
+      "drift": 0,
+      "criticalBelow": 40,
+      "criticalAbove": 150,
+      "min": 0,
+      "max": 200,
+      "unit": "bpm",
+      "label": "Heart rate",
+      "meaning": "Palpable/mechanical pulse, not ECG electrical activity.",
+      "learnerVisible": false
+    },
+
+    "oxygenSaturation": {
+      "initial": 82,
+      "drift": -0.25,
+      "criticalBelow": 85,
+      "criticalAbove": null,
+      "min": 0,
+      "max": 100,
+      "unit": "%",
+      "label": "Internal SpO₂",
+      "meaning": "Internal estimated arterial oxygenation used by the model. During arrest this is not automatically a reliable pulse oximeter display.",
+      "learnerVisible": false
+    },
+
+    "perfusionPressure": {
+      "initial": 0,
+      "drift": -0.5,
+      "criticalBelow": 20,
+      "criticalAbove": null,
+      "min": 0,
+      "max": 80,
+      "unit": "mmHg proxy",
+      "label": "CPR perfusion pressure",
+      "meaning": "Hidden CPR-generated perfusion proxy. This is not a measurable blood pressure during cardiac arrest.",
+      "learnerVisible": false
+    },
+
+    "consciousness": {
+      "initial": 0.0,
+      "drift": 0,
+      "criticalBelow": 0.3,
+      "criticalAbove": null,
+      "min": 0,
+      "max": 1,
+      "unit": "GCS proxy",
+      "label": "Consciousness",
+      "meaning": "GCS-style proxy: 0 = unresponsive, 1 = fully alert.",
+      "learnerVisible": false
+    },
+
+    "respiratoryRate": {
+      "initial": 0,
+      "drift": 0,
+      "criticalBelow": 8,
+      "criticalAbove": 40,
+      "min": 0,
+      "max": 60,
+      "unit": "breaths/min",
+      "label": "Resp rate",
+      "meaning": "Spontaneous respiratory rate. Rescue breaths/ventilation should not be modelled as normal spontaneous RR.",
+      "learnerVisible": false
+    },
+
+    "painScore": {
+      "initial": 0,
+      "drift": 0,
+      "criticalBelow": null,
+      "criticalAbove": null,
+      "min": 0,
+      "max": 10,
+      "unit": "/10",
+      "label": "Pain score",
+      "meaning": "No pain response because patient is unconscious.",
+      "learnerVisible": false
+    },
+
+    "bloodPressureSystolic": {
+      "initial": 0,
+      "drift": 0,
+      "criticalBelow": 70,
+      "criticalAbove": 180,
+      "min": 0,
+      "max": 220,
+      "unit": "mmHg",
+      "label": "BP systolic",
+      "meaning": "Measurable systolic blood pressure. During cardiac arrest this should remain absent/unmeasurable until ROSC.",
+      "learnerVisible": false
+    },
+
+    "temperature": {
+      "initial": 36.8,
+      "drift": -0.001,
+      "criticalBelow": 35,
+      "criticalAbove": 39.5,
+      "min": 32,
+      "max": 42,
+      "unit": "°C",
+      "label": "Temperature",
+      "meaning": "Core temperature proxy.",
+      "learnerVisible": false
+    }
+  },
+
+  "parameterConstraints": [
+    {
+      "parameter": "bloodPressureSystolic",
+      "when": { "rhythmState": "arrest" },
+      "set": 0
+    },
+    {
+      "parameter": "perfusionPressure",
+      "when": { "rhythmState": "arrest" },
+      "min": 0,
+      "max": 60
+    },
+    {
+      "parameter": "perfusionPressure",
+      "when": { "rhythmState": "rosc" },
+      "set": 0
+    }
+  ],
+
+  "derivedParameters": {
+    "skinColour": {
+      "sourceParameters": ["oxygenSaturation", "bloodPressureSystolic", "consciousness", "temperature"],
+      "states": ["normal", "pale", "cyanotic", "mottled", "flushed"],
+      "fitzpatrickAware": true,
+      "learnerVisible": true
+    },
+
+    "pulseOxSignalQuality": {
+      "initial": 0,
+      "min": 0,
+      "max": 1,
+      "unit": "",
+      "label": "Pulse ox signal",
+      "learnerVisible": false,
+      "meaning": "0 = no reliable waveform, 1 = reliable SpO2 signal."
+    },
+
+    "displayedOxygenSaturation": {
+      "initial": null,
+      "unit": "%",
+      "label": "Displayed SpO₂",
+      "learnerVisible": true,
+      "meaning": "What the learner sees on the ER monitor. May be null/LOW SIGNAL even when internal oxygenSaturation exists."
+    },
+
+    "ecgDisplay": {
+      "initial": "not_connected",
+      "unit": "",
+      "label": "ECG display",
+      "learnerVisible": true,
+      "possibleValues": [
+        "not_connected",
+        "ventricular_fibrillation",
+        "asystole",
+        "pulseless_electrical_activity",
+        "sinus_rhythm_post_rosc"
+      ]
+    },
+
+    "nibpDisplay": {
+      "initial": "not_connected",
+      "unit": "",
+      "label": "NIBP display",
+      "learnerVisible": true,
+      "possibleValues": ["not_connected", "unable_to_read", "numeric"]
+    }
+  },
+
+  "monitorOutputs": {
+    "pulseOximeter": {
+      "requires": ["pulseOxProbeAttached"],
+      "rules": [
+        {
+          "targetParameter": "displayedOxygenSaturation",
+          "when": { "rhythmState": "arrest" },
+          "display": "LOW SIGNAL",
+          "rationale": "No reliable pulsatile flow during untreated arrest."
+        },
+        {
+          "targetParameter": "displayedOxygenSaturation",
+          "when": { "rhythmState": "arrest", "cprInProgress": true },
+          "display": "INTERMITTENT_LOW_SIGNAL",
+          "rationale": "CPR may generate intermittent pulsatile flow but readings remain unreliable."
+        },
+        {
+          "targetParameter": "displayedOxygenSaturation",
+          "when": { "rhythmState": "rosc", "pulseOxSignalQuality": { "above": 0.5 } },
+          "display": "numeric_oxygenSaturation",
+          "targetRange": { "min": 94, "max": 98 }
+        },
+        {
+          "targetParameter": "displayedOxygenSaturation",
+          "when": { "rhythmState": "rosc", "pulseOxSignalQuality": { "below": 0.5 } },
+          "display": "LOW SIGNAL"
+        }
+      ]
+    },
+
+    "ecgMonitor": {
+      "requiresAny": ["aedPadsApplied", "ecgMonitoringAttached"],
+      "rules": [
+        {
+          "targetParameter": "ecgDisplay",
+          "when": { "rhythmState": "arrest", "arrestRhythm": "shockable_vf" },
+          "display": "ventricular_fibrillation"
+        },
+        {
+          "targetParameter": "ecgDisplay",
+          "when": { "rhythmState": "rosc" },
+          "display": "sinus_rhythm_post_rosc"
+        }
+      ]
+    },
+
+    "bloodPressureCuff": {
+      "requires": ["bpCuffAttached"],
+      "rules": [
+        {
+          "targetParameter": "nibpDisplay",
+          "when": { "rhythmState": "arrest" },
+          "display": "unable_to_read"
+        },
+        {
+          "targetParameter": "nibpDisplay",
+          "when": { "rhythmState": "rosc", "bloodPressureSystolic": { "above": 50 } },
+          "display": "numeric_bloodPressureSystolic"
+        }
+      ]
+    }
+  },
+
+  "couplings": [
+    {
+      "id": "arrest_no_spontaneous_output",
+      "if": "pulseRate",
+      "below": 1,
+      "onlyWhen": { "rhythmState": "arrest" },
+      "effects": {
+        "oxygenSaturation": -0.45,
+        "perfusionPressure": -0.4,
+        "consciousness": -0.01
+      },
+      "hiddenStateEffects": {
+        "brainHypoxiaBurden": 0.02,
+        "timeWithoutEffectiveCPR": 1
+      },
+      "reason": "No spontaneous cardiac output causes worsening hypoxia and absent perfusion."
+    },
+
+    {
+      "id": "arrest_with_cpr_partial_perfusion",
+      "if": "perfusionPressure",
+      "above": 20,
+      "onlyWhen": {
+        "rhythmState": "arrest",
+        "cprInProgress": true
+      },
+      "effects": {
+        "oxygenSaturation": 0.08
+      },
+      "hiddenStateEffects": {
+        "brainHypoxiaBurden": -0.01,
+        "timeWithoutEffectiveCPR": -1
+      },
+      "reason": "Effective CPR provides partial perfusion and slows deterioration."
+    },
+
+    {
+      "id": "severe_hypoxia_during_arrest",
+      "if": "oxygenSaturation",
+      "below": 75,
+      "onlyWhen": { "rhythmState": "arrest" },
+      "effects": {
+        "consciousness": -0.01
+      },
+      "hiddenStateEffects": {
+        "brainHypoxiaBurden": 0.03
+      },
+      "reason": "Severe hypoxaemia increases neurological injury risk during arrest."
+    },
+
+    {
+      "id": "post_rosc_hypoxia",
+      "if": "oxygenSaturation",
+      "below": 90,
+      "onlyWhen": { "rhythmState": "rosc" },
+      "effects": {
+        "consciousness": -0.004,
+        "bloodPressureSystolic": -0.08
+      },
+      "reason": "Hypoxaemia after ROSC worsens neurological and cardiovascular recovery."
+    },
+
+    {
+      "id": "post_rosc_hypotension",
+      "if": "bloodPressureSystolic",
+      "below": 90,
+      "onlyWhen": { "rhythmState": "rosc" },
+      "effects": {
+        "consciousness": -0.003,
+        "oxygenSaturation": -0.04
+      },
+      "reason": "Low post-ROSC blood pressure reduces organ perfusion."
+    }
+  ],
+
+  "actionMappings": {
+    "checkResponse": {
+      "label": "Check Response",
+      "group": "Assessment",
+      "instruction": "Shout clearly and tap both shoulders: 'Are you alright?'",
+      "completionOnly": true,
+      "sequence": 1,
+      "clinicalFinding": "No response.",
+      "learnerFeedback": "Patient is unresponsive."
+    },
+
+    "callCrashTeam": {
+      "label": "Call Crash Team",
+      "group": "Call for help",
+      "instruction": "Call 2222. State location, patient sex/age if known, and 'cardiac arrest'. Ask for AED/defibrillator.",
+      "completionOnly": true,
+      "sequence": 2,
+      "clinicalFinding": "Help requested.",
+      "debriefCategory": "early_help"
+    },
+
+    "openAirway": {
+      "label": "Open Airway",
+      "group": "Assessment",
+      "instruction": "Use head tilt-chin lift unless trauma is suspected. Look for obvious airway obstruction.",
+      "sequence": 3,
+      "setsState": {
+        "airwayOpen": true
+      },
+      "effects": {
+        "oxygenSaturation": 0.1
+      },
+      "clinicalFinding": "Airway opened, but patient is still not breathing normally.",
+      "rationale": "Opening the airway supports assessment and ventilation. It should not magically restore normal breathing during cardiac arrest."
+    },
+
+    "checkBreathing": {
+      "label": "Check Breathing",
+      "group": "Assessment",
+      "instruction": "Look, listen, and feel for normal breathing for no more than 10 seconds.",
+      "completionOnly": true,
+      "sequence": 4,
+      "clinicalFinding": "Not breathing normally.",
+      "setsState": {
+        "breathingNormally": false
+      },
+      "learnerFeedback": "Treat as cardiac arrest and start CPR."
+    },
+
+    "attachPulseOx": {
+      "label": "Attach Pulse Oximeter",
+      "group": "Monitoring",
+      "instruction": "Attach pulse oximeter probe to finger if available, but do not delay CPR.",
+      "sequence": 5,
+      "setsState": {
+        "pulseOxProbeAttached": true
+      },
+      "effects": {},
+      "monitorEffect": {
+        "pulseOxSignalQuality": 0.0,
+        "displayedOxygenSaturation": null
+      },
+      "learnerFeedback": "Pulse oximeter attached. Signal quality depends on perfusion and rhythm state."
+    },
+
+    "cprCompressions": {
+      "label": "CPR Compressions",
+      "group": "CPR / ventilation",
+      "instruction": "Start chest compressions. Centre/lower half of sternum, arms straight, shoulders over chest, 100-120/min, 5-6 cm depth, full recoil.",
+      "sequence": 6,
+      "preconditions": {
+        "rhythmState": { "equals": "arrest" }
+      },
+      "preconditionMessage": "CPR is indicated only in confirmed/suspected cardiac arrest. After ROSC, reassess rather than continuing compressions.",
+      "setsState": {
+        "cprInProgress": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToFirstCPRSeconds",
+        "updateRecentQualityAs": "recentCPRQuality",
+        "updateAverageQualityAs": "averageCPRQuality",
+        "averageCountAs": "cprAttemptCount"
+      },
+      "effects": {
+        "perfusionPressure": 12.0,
+        "oxygenSaturation": 0.4,
+        "pulseRate": 0.0,
+        "consciousness": 0.0
+      },
+      "qualityEffects": {
+        "qualitySource": ["quest_hand_tracking", "cv_pipeline"],
+        "minimumEffectiveQuality": 0.55,
+        "rateTargetPerMinute": { "min": 100, "max": 120 },
+        "depthTargetCm": { "min": 5, "max": 6 },
+        "poorQualityPenalty": {
+          "perfusionPressure": -4.0,
+          "oxygenSaturation": -0.2,
+          "brainHypoxiaBurden": 0.02
+        }
+      },
+      "suppressCouplings": true,
+      "suppressDuration": 4,
+      "rationale": "CPR produces partial perfusion but should not create a normal spontaneous pulse or measurable BP."
+    },
+
+    "rescueBreaths": {
+      "label": "Rescue Breaths",
+      "group": "CPR / ventilation",
+      "instruction": "Give 2 rescue breaths after 30 compressions if trained and able. Open airway, seal mouth, breathe just enough to see chest rise.",
+      "sequence": 7,
+      "preconditions": {
+        "rhythmState": { "equals": "arrest" }
+      },
+      "preconditionMessage": "Rescue breaths are part of CPR in cardiac arrest when trained and able. Do not give rescue breaths to a breathing patient with a pulse.",
+      "requiresState": {
+        "airwayOpen": true
+      },
+      "requiredStateMessage": "Open the airway before giving rescue breaths.",
+      "setsState": {
+        "effectiveVentilation": true
+      },
+      "effects": {
+        "oxygenSaturation": 1.0,
+        "respiratoryRate": 0.0
+      },
+      "rationale": "Ventilation can improve oxygenation during CPR, but it does not represent spontaneous breathing."
+    },
+
+    "applyAEDPads": {
+      "label": "Apply AED Pads",
+      "group": "Defibrillation",
+      "instruction": "Apply pads: one below right clavicle, one left lateral chest. Continue CPR while pads are applied if possible.",
+      "sequence": 8,
+      "oneShot": true,
+      "preconditions": {
+        "rhythmState": { "equals": "arrest" }
+      },
+      "setsState": {
+        "aedPadsApplied": true,
+        "ecgMonitoringAttached": true,
+        "shockAdvised": true
+      },
+      "effects": {},
+      "monitorEffect": {
+        "ecgDisplay": "ventricular_fibrillation"
+      },
+      "learnerFeedback": "AED analysing rhythm. Shock advised."
+    },
+
+    "shockIfAdvised": {
+      "label": "Deliver Shock if Advised",
+      "group": "Defibrillation",
+      "instruction": "Ensure everyone is clear. Deliver shock if advised. Resume CPR immediately after shock.",
+      "sequence": 9,
+      "preconditions": {
+        "rhythmState": { "equals": "arrest" }
+      },
+      "requiresState": {
+        "aedPadsApplied": true,
+        "shockAdvised": true
+      },
+      "requiredStateMessage": "Shock is only available when the AED has analysed the rhythm and advised a shock.",
+      "setsState": {
+        "shockDelivered": true,
+        "shockAdvised": false,
+        "needsCPRAfterShock": true
+      },
+      "metrics": {
+        "recordFirstTimeAs": "timeToFirstShockSeconds",
+        "increment": "shockCount"
+      },
+      "effects": {
+        "perfusionPressure": 2.0,
+        "oxygenSaturation": 0.5
+      },
+      "conditionalOutcome": {
+        "successCondition": {
+          "timeToFirstShockSeconds": { "below": 180 },
+          "recentCPRQuality": { "above": 0.55 },
+          "brainHypoxiaBurden": { "below": 2.5 }
+        },
+        "onSuccess": {
+          "rhythmState": "rosc_pending",
+          "message": "Shock delivered. Continue CPR briefly while reassessing for signs of ROSC."
+        },
+        "onFailure": {
+          "rhythmState": "arrest",
+          "message": "Shock delivered but no ROSC. Resume CPR and follow AED prompts."
+        }
+      },
+      "suppressCouplings": true,
+      "suppressDuration": 6
+    },
+
+    "continueCPRAfterShock": {
+      "label": "Resume CPR After Shock",
+      "group": "CPR / ventilation",
+      "instruction": "Immediately resume chest compressions after shock. Do not pause for a pulse check unless clear signs of ROSC appear.",
+      "sequence": 10,
+      "preconditions": {
+        "rhythmState": { "equalsAny": ["arrest", "rosc_pending"] }
+      },
+      "requiresState": {
+        "needsCPRAfterShock": true
+      },
+      "requiredStateMessage": "Resume CPR is expected immediately after a delivered shock.",
+      "setsState": {
+        "cprInProgress": true,
+        "needsCPRAfterShock": false
+      },
+      "metrics": {
+        "updateRecentQualityAs": "recentCPRQuality",
+        "updateAverageQualityAs": "averageCPRQuality",
+        "averageCountAs": "cprAttemptCount"
+      },
+      "effects": {
+        "perfusionPressure": 12.0,
+        "oxygenSaturation": 0.5
+      },
+      "conditionalOutcome": {
+        "successCondition": {
+          "rhythmState": "rosc_pending",
+          "recentCPRQuality": { "above": 0.55 }
+        },
+        "onSuccess": {
+          "rhythmState": "rosc",
+          "setsState": {
+            "roscAchieved": true,
+            "palpablePulsePresent": true,
+            "cprInProgress": false,
+            "shockAdvised": false,
+            "needsCPRAfterShock": false
+          },
+          "effects": {
+            "pulseRate": 58,
+            "bloodPressureSystolic": 94,
+            "respiratoryRate": 8,
+            "consciousness": 0.18,
+            "oxygenSaturation": 86
+          },
+          "monitorEffect": {
+            "ecgDisplay": "sinus_rhythm_post_rosc",
+            "pulseOxSignalQuality": 0.45
+          },
+          "message": "ROSC achieved. Stop compressions, reassess ABCDE, support oxygenation and circulation."
+        },
+        "onFailure": {
+          "rhythmState": "arrest",
+          "setsState": {
+            "shockAdvised": true,
+            "needsCPRAfterShock": false
+          },
+          "message": "No ROSC yet. Continue CPR cycle. AED may re-analyse and advise another shock."
+        }
+      },
+      "suppressCouplings": true,
+      "suppressDuration": 10
+    },
+
+    "oxygenTherapy": {
+      "label": "Oxygen Therapy",
+      "group": "Post-ROSC care",
+      "instruction": "After ROSC, apply high-concentration oxygen initially. Once SpO2 is reliable, titrate oxygen to target 94-98%.",
+      "sequence": 11,
+      "preconditions": {
+        "rhythmState": { "equals": "rosc" }
+      },
+      "preconditionMessage": "Oxygen is important, but it must not delay CPR/defibrillation during arrest. Post-ROSC, oxygen should be titrated once SpO2 is reliable.",
+      "setsState": {
+        "oxygenApplied": true,
+        "pulseOxProbeAttached": true
+      },
+      "effects": {
+        "oxygenSaturation": 4.0,
+        "respiratoryRate": 0.5
+        },
+      "persistentEffect": {
+        "while": {
+          "rhythmState": "rosc",
+          "oxygenApplied": true
+        },
+        "trend": {
+          "oxygenSaturation": {
+            "towards": 96,
+            "ratePerSecond": 0.75
+        },
+        "pulseOxSignalQuality": {
+            "towards": 0.9,
+            "ratePerSecond": 0.08
+        }
+        }
+      }
+    },
+
+    "attachBPCuff": {
+      "label": "Attach BP Cuff",
+      "group": "Monitoring",
+      "instruction": "Attach non-invasive BP cuff for post-ROSC monitoring.",
+      "sequence": 12,
+      "setsState": {
+        "bpCuffAttached": true
+      },
+      "effects": {},
+      "monitorEffect": {
+        "nibpDisplay": "numeric_if_rosc_otherwise_unable"
+      },
+      "preconditions": {
+        "rhythmState": { "equals": "rosc" }
+     },
+        "preconditionMessage": "Attach BP cuff for post-ROSC monitoring. During arrest, CPR and defibrillation take priority."
+    },
+
+    "recoveryPosition": {
+        "label": "Recovery Position",
+        "group": "Post-ROSC care",
+        "instruction": "Optional: if the patient has ROSC, is breathing adequately, and there is no major trauma concern, place in the recovery position while maintaining airway and monitoring.",
+        "sequence": 13,
+        "completionOnly": true,
+        "preconditions": {
+            "rhythmState": { "equals": "rosc" },
+            "respiratoryRate": { "above": 8 },
+            "consciousness": { "above": 0.2 }
+    },
+    "preconditionMessage": "Recovery position is optional after ROSC only if the patient is breathing adequately and it is safe to move them. During cardiac arrest, CPR takes priority."
+},
+
+    "monitorVitals": {
+      "label": "Monitor Vitals",
+      "group": "Monitoring",
+      "instruction": "Continue monitoring ECG/rhythm, pulse, breathing, SpO2 signal quality, BP, consciousness, and prepare handover.",
+      "sequence": 14,
+      "completionOnly": true,
+      "setsState": {
+        "vitalsMonitoringStarted": true
+      },
+      "preconditions": {
+        "rhythmState": { "equals": "rosc" }
+      }
+    }
+  },
+
+  "requiredActions": [
+    "checkResponse",
+    "callCrashTeam",
+    "openAirway",
+    "checkBreathing",
+    "cprCompressions",
+    "rescueBreaths",
+    "applyAEDPads",
+    "shockIfAdvised",
+    "continueCPRAfterShock",
+    "oxygenTherapy",
+    "attachBPCuff",
+    "monitorVitals"
+  ],
+
+  "passScenarios": {
+    "gold": {
+      "description": "Early recognition, early help, high-quality CPR, early AED shock, ROSC, oxygen titrated, post-ROSC monitoring started.",
+      "conditions": {
+        "roscAchieved": true,
+        "timeToFirstCPRSeconds": { "below": 60 },
+        "timeToFirstShockSeconds": { "below": 180 },
+        "averageCPRQuality": { "above": 0.75 },
+        "oxygenSaturation": { "between": [94, 98] },
+        "bloodPressureSystolic": { "above": 90 },
+        "requiredActionsCompleted": true
+      },
+      "outcome": "Patient stabilised awaiting crash team/advanced care."
+    },
+
+    "pass_unstable": {
+      "description": "ROSC achieved, but post-ROSC physiology remains unstable due to delay, poor CPR quality, or incomplete oxygen/monitoring.",
+      "conditions": {
+        "roscAchieved": true,
+        "oxygenSaturation": { "below": 94 }
+      },
+      "outcome": "Patient survives but remains unstable. Debrief should highlight hypoxia and post-ROSC care."
+    }
+  },
+
+  "failScenarios": {
+    "delayed_recognition": {
+      "trigger": {
+        "timeToFirstCPRSeconds": { "above": 90 }
+      },
+      "physiologyEffect": {
+        "oxygenSaturation": -15,
+        "brainHypoxiaBurden": 0.5
+      },
+      "debriefMessage": "Delay in starting CPR caused avoidable deterioration."
+    },
+
+    "no_effective_cpr": {
+      "trigger": {
+        "averageCPRQuality": { "below": 0.55 },
+        "elapsedSeconds": { "above": 60 }
+      },
+      "physiologyEffect": {
+        "oxygenSaturation": -10,
+        "perfusionPressure": -10,
+        "brainHypoxiaBurden": 0.5
+      },
+      "debriefMessage": "CPR technique did not generate enough perfusion."
+    },
+
+    "no_defibrillation": {
+      "trigger": {
+        "aedPadsApplied": false,
+        "elapsedSeconds": { "above": 180 }
+      },
+      "outcome": "ROSC unlikely in shockable arrest without defibrillation.",
+      "debriefMessage": "CPR buys time, but early defibrillation is needed for shockable rhythms."
+    },
+
+    "oxygen_without_cpr": {
+      "trigger": {
+        "oxygenApplied": true,
+        "cprInProgress": false,
+        "rhythmState": "arrest"
+      },
+      "outcome": "No meaningful improvement.",
+      "debriefMessage": "Oxygen must not delay CPR/defibrillation in cardiac arrest."
+    },
+
+    "cpr_after_rosc": {
+      "trigger": {
+        "action": "cprCompressions",
+        "rhythmState": "rosc"
+      },
+      "blockAction": true,
+      "debriefMessage": "After ROSC, stop compressions and reassess ABCDE unless arrest recurs."
+    },
+
+    "post_rosc_hypoxia": {
+      "trigger": {
+        "rhythmState": "rosc",
+        "oxygenSaturation": { "below": 88 },
+        "elapsedSeconds": { "above": 45 }
+      },
+      "physiologyEffect": {
+        "bloodPressureSystolic": -10,
+        "consciousness": -0.05
+      },
+      "possibleOutcome": "re_arrest",
+      "debriefMessage": "ROSC achieved, but oxygenation was not stabilised."
+    }
+  },
+
+  "scenarioEndConditions": {
+    "successfulStabilisation": {
+        "type": "success",
+        "title": "Successful Stabilisation",
+        "requires": {
+        "rhythmState": "rosc",
+        "oxygenSaturation": { "between": [94, 98] },
+        "bloodPressureSystolic": { "above": 90 },
+        "vitalsMonitoringStarted": true,
+        "requiredActionsCompleted": true
+        },
+        "message": "Patient stabilised pending advanced care.",
+        "nextStep": "Proceed to debrief."
+    },
+
+    "unsuccessfulResuscitation": {
+        "type": "failure",
+        "title": "Resuscitation Unsuccessful",
+        "requiresAny": [
+        {
+            "brainHypoxiaBurden": { "above": 4.0 },
+            "rhythmState": "arrest"
+        },
+        {
+            "oxygenSaturation": { "below": 35 },
+            "rhythmState": "arrest",
+            "elapsedSeconds": { "above": 240 }
+        },
+        {
+            "timeWithoutEffectiveCPR": { "above": 180 },
+            "rhythmState": "arrest"
+        }
+        ],
+        "message": "Resuscitation unsuccessful in this simulation.",
+        "nextStep": "Proceed to debrief."
+    }
+    },
+
+  "environment": {
+    "location": "hospital-corridor",
+    "lighting": "bright",
+    "timeOfDay": "morning",
+    "availableEquipment": [
+      "AED",
+      "bag-valve-mask",
+      "oxygen-cylinder",
+      "non-rebreather-mask",
+      "pulse-oximeter",
+      "bp-cuff",
+      "gloves"
+    ]
+  },
+
+  "learnerVisibleObjects": {
+    "patient": true,
+    "aed": true,
+    "oxygenMask": true,
+    "bpCuff": true,
+    "pulseOximeter": true,
+    "developerVitalsDashboard": false,
+    "floatingDebugValues": false
+  },
+
+  "debriefMetrics": [
+    "timeToFirstCPRSeconds",
+    "timeToFirstShockSeconds",
+    "averageCPRQuality",
+    "recentCPRQuality",
+    "cprAttemptCount",
+    "shockCount",
+    "brainHypoxiaBurden",
+    "timeWithoutEffectiveCPR",
+    "perfusionPressureTrend",
+    "averageCPRRate",
+    "averageCPRDepth",
+    "compressionInterruptions",
+    "ventilationAttempted",
+    "aedUsed",
+    "roscAchieved",
+    "postROSCSpO2Range",
+    "postROSCBloodPressureTrend",
+    "unsafeActions",
+    "missedActions"
+  ]
 }
