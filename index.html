@@ -535,37 +535,92 @@
         const label = String(action.label ?? '').toLowerCase()
         const text = `${id} ${label}`
 
+        // ------------------------------------------------------------
+        // Actions that should NOT trigger patient speech
+        // ------------------------------------------------------------
+        // These are clinician/team/process actions, not direct patient interactions.
+        if (
+            text.includes('monitor vitals') ||
+            text.includes('monitoring') ||
+            text.includes('attach monitoring') ||
+            text.includes('attach ed monitoring') ||
+            text.includes('attach pulse oximeter') ||
+            text.includes('attach bp cuff') ||
+            text.includes('ecg') ||
+            text.includes('sbar') ||
+            text.includes('atmist') ||
+            text.includes('handover') ||
+            text.includes('aftercare') ||
+            text.includes('plan observation') ||
+            text.includes('recognise') ||
+            text.includes('recognize') ||
+            text.includes('call senior') ||
+            text.includes('call crash team') ||
+            text.includes('call senior / paediatric') ||
+            text.includes('call senior / sepsis') ||
+            text.includes('request imaging') ||
+            text.includes('orthopaedics') ||
+            text.includes('request iv antibiotics') ||
+            text.includes('send bloods') ||
+            text.includes('take blood cultures') ||
+            text.includes('prepare fluid') ||
+            text.includes('prepare iv fluids') ||
+            text.includes('prepare shock escalation') ||
+            text.includes('consider critical care') ||
+            text.includes('consider antihistamine') ||
+            text.includes('consider steroid') ||
+            text.includes('diagnosis') ||
+            text.includes('reassessment') && !text.includes('adrenaline')
+            // (text.includes('reassessment') && !text.includes('adrenaline')) (if issues)
+        ) {
+            return null
+        }
+
+        // ------------------------------------------------------------
         // Fractured femur — painful / unsafe limb handling
+        // ------------------------------------------------------------
         if (
             text.includes('move injured leg') ||
             text.includes('straighten injured leg') ||
-            text.includes('stand') ||
-            text.includes('weight') ||
+            text.includes('ask patient to stand') ||
+            text.includes('stand/walk') ||
+            text.includes('weight-bearing') ||
             text.includes('palpate') ||
-            text.includes('touch') ||
-            text.includes('leg') ||
-            text.includes('injured limb')
+            text.includes('check distal pulse') ||
+            text.includes('check capillary refill') ||
+            text.includes('check foot sensation') ||
+            text.includes('check toe movement')
         ) {
             return "legTouched"
         }
 
         // Fractured femur — supportive care
         if (
+            text.includes('support limb') ||
+            text.includes('support leg') ||
             text.includes('immobilise') ||
             text.includes('immobilize') ||
-            text.includes('splint') ||
-            text.includes('support leg')
+            text.includes('pad around limb') ||
+            text.includes('splint')
         ) {
             return "splintOrImmobilisationApplied"
         }
 
-        // Anaphylaxis
-        if (text.includes('oxygen')) {
+        // ------------------------------------------------------------
+        // Anaphylaxis — direct patient-facing actions
+        // ------------------------------------------------------------
+        if (
+            text.includes('give high-flow oxygen') ||
+            text.includes('oxygen therapy') ||
+            text.includes('give oxygen')
+        ) {
             return "oxygenApplied"
         }
 
         if (
-            text.includes('adrenaline') ||
+            text.includes('give im adrenaline') ||
+            text.includes('second im adrenaline') ||
+            text.includes('administer adrenaline') ||
             text.includes('epipen') ||
             text.includes('auto-injector')
         ) {
@@ -573,44 +628,59 @@
         }
 
         if (
-            text.includes('reassess') &&
-            text.includes('adrenaline')
+            text.includes('reassess abc after adrenaline')
         ) {
             return "afterAdrenalineReassess"
         }
 
-        // Sepsis
+        // ------------------------------------------------------------
+        // Sepsis — direct patient-facing actions
+        // ------------------------------------------------------------
         if (
-            text.includes('monitoring') ||
-            text.includes('monitor') ||
-            text.includes('observations')
+            text.includes('establish iv access')
         ) {
             return "monitoringAttached"
         }
 
         if (
-            text.includes('fluid') ||
-            text.includes('fluids')
+            text.includes('give iv fluids') ||
+            text.includes('fluid bolus')
         ) {
             return "fluidsGiven"
         }
 
         if (
-            text.includes('antibiotic') ||
-            text.includes('antibiotics')
+            text.includes('administer antibiotics')
         ) {
             return "antibioticsGiven"
         }
 
+        if (
+            text.includes('give oxygen if hypoxic') ||
+            text.includes('give oxygen')
+        ) {
+            return "oxygenApplied"
+        }
+
+        // ------------------------------------------------------------
         // Cardiac arrest
-        if (id === "checkresponse") return "checkResponse"
-        if (id === "openairway") return "openAirway"
-        if (id === "cprcompressions") return "cprCompressions"
-        if (id === "rescuebreaths") return "rescueBreaths"
-        if (id === "applyaedpads") return "applyAEDPads"
-        if (id === "shockifadvised") return "shockIfAdvised"
-        if (id === "continuecpraftershock") return "continueCPRAfterShock"
-        if (id === "monitorvitals") return "monitorVitals"
+        // ------------------------------------------------------------
+        // Most arrest actions should not trigger patient speech.
+        // DialogueEngine already prevents speech during arrest, but we also avoid
+        // unnecessary action-triggered dialogue here.
+        if (
+            id === "checkresponse" ||
+            text.includes('check response')
+        ) {
+            return "checkResponse"
+        }
+
+        if (
+            text.includes('oxygen therapy') ||
+            text.includes('post-rosc oxygen')
+        ) {
+            return "oxygenApplied"
+        }
 
         return null
     }

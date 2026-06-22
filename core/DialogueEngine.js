@@ -233,7 +233,7 @@ export class DialogueEngine {
     }
 
     if (stateCategory === "deteriorating") {
-      return `${response} I feel really dizzy...`;
+      return this.addDeteriorationCue(response);
     }
 
     if (stateCategory === "critical") {
@@ -450,6 +450,81 @@ export class DialogueEngine {
 
     const index = Math.floor(Math.random() * lines.length);
     return lines[index];
+  }
+
+  addDeteriorationCue(response) {
+  if (!response) return "";
+
+  // Do not add a deterioration cue if the response already sounds symptomatic.
+  const alreadyHasSymptom = this.includesAny(response.toLowerCase(), [
+      "dizzy",
+      "faint",
+      "cold",
+      "breath",
+      "breathe",
+      "throat",
+      "tight",
+      "weak",
+      "scared",
+      "confused",
+      "pain",
+      "hurts",
+      "agony",
+      "itch",
+      "rash",
+      "funny"
+    ]);
+
+    if (alreadyHasSymptom) {
+      return response;
+    }
+
+    const cue = this.getScenarioDeteriorationCue();
+
+    if (!cue) {
+      return response;
+    }
+
+    return `${response} ${cue}`;
+  }
+
+  getScenarioDeteriorationCue() {
+    const scenarioId = this.dialogueData?.scenarioId || this.dialogueData?.id || "";
+
+    const cuesByScenario = {
+      "fractured-femur-adult": [
+        "I feel cold...",
+        "I feel a bit faint...",
+        "I feel like I might pass out...",
+        "Please don't move my leg..."
+      ],
+
+      "anaphylaxis-paediatric": [
+        "My throat feels tight...",
+        "It's hard to breathe...",
+        "I feel scared...",
+        "My mouth feels funny..."
+      ],
+
+      "sepsis-adult": [
+        "I feel really cold...",
+        "I feel weak...",
+        "I don't feel right...",
+        "I'm finding it hard to think..."
+      ],
+
+      "cardiac-arrest-adult": [
+        "I feel very weak...",
+        "I don't understand...",
+        "I feel strange..."
+      ]
+    };
+
+    const possibleCues = cuesByScenario[scenarioId] || [
+      "I don't feel right..."
+    ];
+
+    return this.pickRandom(possibleCues);
   }
 
   shortenForCriticalState(response) {
