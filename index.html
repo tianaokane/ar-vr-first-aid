@@ -245,6 +245,9 @@
     let completed = new Set()
     let orderedSteps = []
 
+    let lastProactiveDialogueAt = 0
+    const proactiveDialogueCooldownSeconds = 20
+
     const els = {
         dot: document.getElementById('dot'),
         statusText: document.getElementById('statusText'),
@@ -341,6 +344,7 @@
         window.model = model
         window.scenario = scenario
         completed = new Set()
+        lastProactiveDialogueAt = 0
 
         const dialogueResponse = await fetch(`./dialogue/${id}-dialogue.json`, { cache: 'no-store' })
 
@@ -396,6 +400,7 @@
         model._tick = function () {
             originalTick()
             updateAll()
+            maybeTriggerProactiveDialogue()
 
             if (!model.isRunning) {
                 els.dot.classList.remove('live')
@@ -623,11 +628,50 @@
         )
 
         if (response) {
+            const elapsed = model?._elapsedSeconds?.() ?? 0
+            lastProactiveDialogueAt = elapsed
+
             els.dialogueOutput.textContent = response
             addLog(`Patient: ${response}`, 'info')
         } else {
             els.dialogueOutput.textContent = 'No verbal response.'
         }
+    }
+
+    function maybeTriggerProactiveDialogue() {
+        if (!model?.isRunning || !dialogueEngine) return
+
+        const elapsed = model._elapsedSeconds?.() ?? 0
+
+        if (elapsed - lastProactiveDialogueAt < proactiveDialogueCooldownSeconds) {
+            return
+        }
+
+        const state = dialogueEngine.getCurrentState()
+        const stateCategory = dialogueEngine.getStateCategory(state)
+
+        let reason = null
+        const scenarioId = scenario?.scenarioId ?? scenario?.id ?? els.scenarioSelect.value
+
+        if (stateCategory === "critical" || stateCategory === "deteriorating") {
+            if (scenarioId.includes("anaphylaxis")) {
+                reason = "breathingWorsening"
+            } else if (scenarioId.includes("sepsis")) {
+                reason = "confusionWorsening"
+            } else {
+                reason = "shockWorsening"
+            }
+        } else {
+            return
+        }
+
+        const response = dialogueEngine.generateProactiveLine(state, reason)
+
+        if (!response) return
+
+        lastProactiveDialogueAt = elapsed
+        els.dialogueOutput.textContent = response
+        addLog(`Patient: ${response}`, 'info')
     }
 
     function runAction(actionId, quality) {

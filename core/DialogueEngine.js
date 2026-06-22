@@ -44,18 +44,14 @@ export class DialogueEngine {
 
     let possibleLines = [];
 
-    if (
-      reason === "shockWorsening" &&
-      this.dialogueData.proactiveLines?.shockWorsening
-    ) {
+    if (this.dialogueData.proactiveLines?.[reason]) {
+      possibleLines = this.dialogueData.proactiveLines[reason];
+    } else if (this.dialogueData.proactiveLines?.shockWorsening) {
       possibleLines = this.dialogueData.proactiveLines.shockWorsening;
-    } else if (
-      reason === "afterCorrectCare" &&
-      this.dialogueData.proactiveLines?.afterCorrectCare
-    ) {
-      possibleLines = this.dialogueData.proactiveLines.afterCorrectCare;
+    } else if (this.dialogueData.proactiveLines?.inactiveTooLong) {
+      possibleLines = this.dialogueData.proactiveLines.inactiveTooLong;
     } else {
-      possibleLines = this.dialogueData.proactiveLines?.inactiveTooLong || [];
+      possibleLines = [];
     }
 
     const line = this.pickRandom(possibleLines);
@@ -277,19 +273,40 @@ export class DialogueEngine {
   getStateCategory(state = {}) {
     const consciousness = this.getNumericStateValue(state, "consciousness", 1);
     const systolicBP = this.getSystolicBloodPressure(state);
+
     const spo2 =
       this.getNumericStateValue(state, "spo2", null) ??
       this.getNumericStateValue(state, "oxygenSaturation", 98);
+
+    const pulseRate =
+      this.getNumericStateValue(state, "pulseRate", null) ??
+      this.getNumericStateValue(state, "heartRate", 80);
+
+    const respiratoryRate =
+      this.getNumericStateValue(state, "respiratoryRate", null) ??
+      this.getNumericStateValue(state, "respRate", 16);
 
     if (consciousness <= 0.05) {
       return "unconscious";
     }
 
-    if (consciousness <= 0.25 || systolicBP < 80 || spo2 < 85) {
+    if (
+      consciousness <= 0.25 ||
+      systolicBP < 80 ||
+      spo2 < 85 ||
+      pulseRate >= 140 ||
+      respiratoryRate >= 34
+    ) {
       return "critical";
     }
 
-    if (consciousness <= 0.6 || systolicBP < 95 || spo2 < 92) {
+    if (
+      consciousness <= 0.6 ||
+      systolicBP < 100 ||
+      spo2 < 92 ||
+      pulseRate >= 120 ||
+      respiratoryRate >= 28
+    ) {
       return "deteriorating";
     }
 
