@@ -244,6 +244,7 @@
     let dialogueEngine = null
     let completed = new Set()
     let orderedSteps = []
+    let spokenActionDialogue = new Set()
 
     let lastProactiveDialogueAt = 0
     const proactiveDialogueCooldownSeconds = 20
@@ -344,7 +345,8 @@
         window.model = model
         window.scenario = scenario
         completed = new Set()
-        lastProactiveDialogueAt = 0
+spokenActionDialogue = new Set()
+lastProactiveDialogueAt = 0
 
         const dialogueResponse = await fetch(`./dialogue/${id}-dialogue.json`, { cache: 'no-store' })
 
