@@ -410,14 +410,14 @@
 
   "actionMappings": {
     "checkResponse": {
-      "label": "Check Response",
-      "group": "Assessment",
-      "instruction": "Shout clearly and tap both shoulders: 'Are you alright?'",
-      "completionOnly": true,
-      "sequence": 1,
-      "clinicalFinding": "No response.",
-      "learnerFeedback": "Patient is unresponsive."
-    },
+    "label": "Check Response",
+    "group": "Assessment",
+    "instruction": "Shout clearly and tap both shoulders: 'Are you alright?'",
+    "completionOnly": true,
+    "sequence": 1,
+    "clinicalFinding": "Assess responsiveness. In arrest there is no response; after ROSC reassess AVPU/GCS and look for eye opening, speech, movement, or purposeful response.",
+    "learnerFeedback": "Assess responsiveness. In arrest, treat as unresponsive. After ROSC, reassess AVPU/GCS and document any response."
+  },
 
     "callCrashTeam": {
       "label": "Call Crash Team",

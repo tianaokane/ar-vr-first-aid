@@ -42,6 +42,7 @@ export class DialogueEngine {
       return "";
     }
 
+    
     let possibleLines = [];
 
     if (this.dialogueData.proactiveLines?.[reason]) {
@@ -73,6 +74,10 @@ export class DialogueEngine {
   generateResponse(traineeText, state, context = {}) {
     const cleanedText = traineeText.toLowerCase().trim();
     const stateCategory = this.getStateCategory(state);
+
+    if (this.shouldSuppressPostROSCResponse(state, context)) {
+      return "";
+    }
 
     if (this.isCardiacArrestWithNoSpeech(state)) {
       return "";
@@ -387,6 +392,46 @@ export class DialogueEngine {
       respiratoryRate <= 0;
 
     return isCardiacArrestScenario && isInArrest && isUnresponsive;
+  }
+
+  shouldSuppressPostROSCResponse(state = {}, context = {}) {
+    const scenarioId = this.dialogueData?.scenarioId;
+    if (scenarioId !== "cardiac-arrest-adult") {
+      return false;
+    }
+
+    const rhythmState = state.rhythmState;
+    if (rhythmState !== "rosc") {
+      return false;
+    }
+
+    const consciousness = this.getNumericStateValue(state, "consciousness", 0);
+
+    // At very low consciousness, the patient should not be chatting.
+    if (consciousness < 0.2) {
+      return true;
+    }
+
+    const action = context.action;
+
+    // These clinical actions should not repeatedly make a post-arrest patient talk.
+    const silentActions = [
+      "checkResponse",
+      "openAirway",
+      "cprCompressions",
+      "rescueBreaths",
+      "applyAEDPads",
+      "shockIfAdvised",
+      "continueCPRAfterShock",
+      "monitorVitals",
+      "oxygenApplied"
+    ];
+
+    if (silentActions.includes(action) && consciousness < 0.45) {
+      return true;
+    }
+
+    return false;
   }
 
   getCurrentState() {

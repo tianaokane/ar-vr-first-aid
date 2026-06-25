@@ -345,8 +345,8 @@
         window.model = model
         window.scenario = scenario
         completed = new Set()
-spokenActionDialogue = new Set()
-lastProactiveDialogueAt = 0
+        spokenActionDialogue = new Set()
+        lastProactiveDialogueAt = 0
 
         const dialogueResponse = await fetch(`./dialogue/${id}-dialogue.json`, { cache: 'no-store' })
 
@@ -693,6 +693,13 @@ lastProactiveDialogueAt = 0
         const dialogueAction = dialogueActionFor(actionId, action)
         if (!dialogueAction) return
 
+        const dialogueKey = `${els.scenarioSelect.value}:${actionId}:${dialogueAction}`
+
+        // Prevent repeated speech from the same action in one scenario run.
+        if (spokenActionDialogue.has(dialogueKey)) {
+            return
+        }
+
         const response = dialogueEngine.respondToTrainee(
             `[action:${actionId}]`,
             null,
@@ -702,10 +709,12 @@ lastProactiveDialogueAt = 0
         if (response) {
             const elapsed = model?._elapsedSeconds?.() ?? 0
             lastProactiveDialogueAt = elapsed
+            spokenActionDialogue.add(dialogueKey)
 
             els.dialogueOutput.textContent = response
             addLog(`Patient: ${response}`, 'info')
         } else {
+            spokenActionDialogue.add(dialogueKey)
             els.dialogueOutput.textContent = 'No verbal response.'
         }
     }

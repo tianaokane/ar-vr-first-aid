@@ -1495,28 +1495,13 @@
       "message": "Patient deteriorated with worsening airway, breathing, or circulation compromise.",
       "nextStep": "Proceed to debrief."
     },
-    "unstableClinicalCompletion": {
-      "type": "partial",
+    "ongoingAnaphylaxisInstability": {
+      "type": "failure",
       "title": "Patient Remains Clinically Unstable",
       "requires": {
         "requiredActionsCompleted": true
       },
       "requiresAny": [
-        {
-          "unsafeActions": {
-            "above": 0
-          }
-        },
-        {
-          "unsafeMedicationActions": {
-            "above": 0
-          }
-        },
-        {
-          "averageActionQuality": {
-            "below": 0.7
-          }
-        },
         {
           "oxygenSaturation": {
             "below": 94
@@ -1528,7 +1513,17 @@
           }
         },
         {
+          "consciousness": {
+            "below": 0.8
+          }
+        },
+        {
           "workOfBreathing": {
+            "above": 0.7
+          }
+        },
+        {
+          "wheezeSeverity": {
             "above": 0.7
           }
         },
@@ -1538,19 +1533,11 @@
           }
         },
         {
-          "symptomsImproving": false
-        },
-        {
-          "pulseRate": {
-            "above": 170
-          },
-          "respiratoryRate": {
-            "above": 40
-          },
+          "abcProblemsPersist": true,
           "symptomsImproving": false
         }
       ],
-      "message": "The main clinical pathway was attempted, but the child remains unstable or care quality was unsafe/suboptimal. Review timing of adrenaline, ABC reassessment, medication priorities, oxygen, fluids, and aftercare.",
+      "message": "The main clinical pathway was attempted, but the child remains clinically unstable with ongoing airway, breathing, circulation, or consciousness concerns. Continue ABCDE reassessment, repeat IM adrenaline if ABC problems persist, escalate senior/paediatric resus help, and support oxygenation/circulation.",
       "nextStep": "Proceed to debrief."
     },
     "successfulClinicalStabilisation": {
@@ -1595,6 +1582,64 @@
         "airwayBreathingImproved": true
       },
       "message": "Paediatric anaphylaxis stabilised in the ED. The child has received first-line treatment, supportive care, reassessment, monitoring, observation planning, allergy referral planning, auto-injector education planning, and structured handover.",
+      "nextStep": "Proceed to debrief."
+    },
+    "acuteSymptomsImprovingReview": {
+      "type": "partial",
+      "title": "Acute Symptoms Improving — Review Care Quality",
+      "requires": {
+        "requiredActionsCompleted": true,
+        "symptomsImproving": true,
+        "oxygenSaturation": {
+          "above": 94
+        },
+        "bloodPressureSystolic": {
+          "above": 90
+        },
+        "consciousness": {
+          "above": 0.8
+        },
+        "workOfBreathing": {
+          "below": 0.7
+        },
+        "airwaySwelling": {
+          "below": 0.5
+        }
+      },
+      "requiresAny": [
+        {
+          "unsafeActions": {
+            "above": 0
+          }
+        },
+        {
+          "unsafeMedicationActions": {
+            "above": 0
+          }
+        },
+        {
+          "delayedCriticalActions": {
+            "above": 0
+          }
+        },
+        {
+          "averageActionQuality": {
+            "below": 0.7
+          }
+        },
+        {
+          "timeToFirstIMAdrenalineSeconds": {
+            "above": 90
+          }
+        },
+        {
+          "symptomImprovementConfirmed": false
+        },
+        {
+          "airwayBreathingImproved": false
+        }
+      ],
+      "message": "The child’s acute ABC features are improving, but treatment timing, ordering, reassessment, medication priorities, or care quality should be reviewed. Continue observation and aftercare planning.",
       "nextStep": "Proceed to debrief."
     }
   },
@@ -1715,9 +1760,10 @@
   "outcomeDesign": {
     "recommendedEvaluationOrder": [
       "anaphylaxisDeterioration",
-      "unstableClinicalCompletion",
-      "successfulClinicalStabilisation"
+      "ongoingAnaphylaxisInstability",
+      "successfulClinicalStabilisation",
+      "acuteSymptomsImprovingReview"
     ],
-    "rationale": "Critical deterioration should override completion; poor/unsafe but completed care should end as unstable completion; only safe, timely, stabilising care should receive full success."
+    "rationale": "Critical deterioration should override completion; persistent ABC abnormality after attempted care should end as clinically unstable; only safe, stabilising care with no unsafe actions should receive full success; physiologically improving cases with timing/order/quality issues should receive a partial review outcome."
   }
 }
