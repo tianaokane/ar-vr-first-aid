@@ -835,6 +835,28 @@ export class PatientStateModel {
     // ─────────────────────────────────────────────────────────────
 
     _checkScenarioEndConditions() {
+        // Check for simple endCondition (e.g., ROSC achieved in cardiac arrest)
+        const endCondition = this.scenarioConfig?.endCondition
+        if (endCondition?.type === 'rosc_achieved' && this.rhythmState === 'rosc') {
+            this._scenarioEnded = true
+            this._scenarioOutcome = {
+                id: 'rosc_achieved',
+                type: 'success',
+                title: this.scenarioConfig.success?.title ?? 'ROSC Achieved',
+                message: this.scenarioConfig.success?.message ?? 'Return of spontaneous circulation achieved.',
+                nextStep: 'Proceed to debrief',
+                time: this._elapsedSeconds(),
+                metrics: { ...this.metrics },
+                completedActions: this.getCompletedActions(),
+                requiredActionsCompleted: this.areRequiredActionsCompleted()
+            }
+
+            this._logScenarioOutcome(this._scenarioOutcome)
+            this.stop('scenario_end:rosc_achieved')
+            return
+        }
+
+        // Check for complex scenarioEndConditions (legacy support for other scenarios)
         const endConditions = this.scenarioConfig?.scenarioEndConditions ?? {}
 
         for (const [id, endConfig] of Object.entries(endConditions)) {

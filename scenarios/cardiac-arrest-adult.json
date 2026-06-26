@@ -1,16 +1,19 @@
 {
   "schemaVersion": "2.0-clinical",
   "scenarioId": "cardiac-arrest-adult",
-  "scenarioName": "Cardiac Arrest — Adult",
-  "description": "A 55-year-old male collapses in an A&E corridor. He is found unresponsive and not breathing normally. This scenario trains recognition of cardiac arrest, early CPR, AED use, and immediate post-ROSC care.",
+  "scenarioName": "Cardiac Arrest — Adult (First Aid Scope)",
+  "description": "A 55-year-old male collapses in an A&E corridor. He is found unresponsive and not breathing normally. This scenario trains recognition of cardiac arrest, early CPR, AED use, and early defibrillation. Success is defined as return of spontaneous circulation (ROSC), at which point the trainee hands over to the advanced life support team. Post-ROSC critical care management is beyond first aid scope and is not covered in this scenario.",
 
   "clinicalContext": {
     "setting": "hospital-ae-corridor",
-    "audiences": ["first_aider", "nursing_student", "medical_student"],
+    "audiences": ["first_aider"],
     "trainingLevel": "basic_to_intermediate",
     "clinicalModelType": "rule_based_training_simulation",
     "importantNote": "The internal physiology model supports training decisions and debriefing. It is not a patient-specific clinical prediction model."
   },
+
+  "clinicalScope": "first_aid",
+  "scopeBoundary": "This scenario focuses on the first aider's role: recognition, early CPR, AED application, and early defibrillation. Post-ROSC management (ACLS drugs, airway interventions, ongoing haemodynamic support) is hospital/critical care scope and ends the scenario.",
 
   "guidelineAnchors": {
     "recognition": "Unresponsive with absent or abnormal breathing should be treated as cardiac arrest.",
@@ -37,6 +40,17 @@
 
   "rhythmState": "arrest",
   "arrestRhythm": "shockable_vf",
+
+  "endCondition": {
+    "type": "rosc_achieved",
+    "description": "Scenario ends when return of spontaneous circulation is achieved. Patient is then handed to advanced life support team. Post-ROSC management is beyond first aid scope."
+  },
+
+  "success": {
+    "outcome": "ROSC_ACHIEVED",
+    "title": "Return of Spontaneous Circulation Achieved",
+    "message": "Return of spontaneous circulation achieved. First aid care completed successfully. Patient transferred to hospital advanced life support team."
+  },
 
   "patient": {
     "name": "James Brennan",
